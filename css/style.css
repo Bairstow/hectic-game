@@ -1,0 +1,61 @@
+body {
+  background-color: #EAEDED;
+}
+
+.container {
+  background-color: #FFF;
+}
+
+.nav-bar {
+  width: 100%;
+  background-color: #AAADAD;
+  font-size: 120%;
+  height: 5rem;
+  line-height: 5rem;
+  text-align: center;
+}
+
+.logo-main {
+  color: #FFF;
+  background-color: #333;
+  font-family: "Indie Flower";
+  font-size: 300%;
+  text-align: center;
+  text-transform: uppercase;
+  height: 6rem;
+  line-height: 6rem;
+  border-radius: 1rem;
+  margin-top: 4rem;
+}
+
+.play-select-row {
+  text-align: center;
+  font-family: "Indie Flower";
+  font-size: 120%;
+  margin-top: 6rem;
+}
+
+.game-select-option {
+  color: #FFF;
+  background-color: #555;
+  height: 4rem;
+  line-height: 4rem;
+  margin-top: 4rem;
+  border-radius: 1rem;
+}
+
+.game-board {
+  margin-top: 6rem;
+  background-color: #555;
+  border-radius: 2rem;
+}
+
+.footer-row {
+  position: fixed;
+  bottom: 1rem;
+}
+.footer {
+  text-align: center;
+  font-size: 60%;
+  color: #999;
+}

@@ -5,6 +5,8 @@
   <title>Hectic</title>
   <link rel="stylesheet" href="css/dev/normalize.css">
   <link rel="stylesheet" href="css/dev/skeleton.css">
+  <link rel="stylesheet" href="http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+  <link href='https://fonts.googleapis.com/css?family=Indie+Flower' rel='stylesheet' type='text/css'>
   <link rel="stylesheet" href="css/style.css">
   <script src="js/dev/jquery-1.11.3.js"></script>
   <script src="js/dev/underscore.js"></script>
@@ -12,8 +14,31 @@
 </head>
 <body>
   <div class="container">
-    <div class="row">
-      <div class="u-full-width header"></div>
+    <div class="row nav-bar">
+      <div class="two columns u-pull-left site-icon">
+        <i class="icon ion-bonfire"></i>
+      </div>
+      <div class="two columns u-pull-right nav-icon">
+        <i class="icon ion-navicon-round"></i>
+      </div>
+      <div class="two columns u-pull-right avatar-icon">
+        <i class="icon ion-person"></i>
+      </div>
+      <div class="two columns u-pull-right player-detail">Player</div>
+    </div>
+    <div class="row logo-row">
+      <div class="eight columns offset-by-two logo-main">Hectic</div>
+    </div>
+    <div class="row play-select-row">
+      <div class="six columns offset-by-three game-select-title">Select Game Type</div>
+      <div class="six columns offset-by-three game-select-option">1 Player</div>
+      <div class="six columns offset-by-three game-select-option">2 Player Lobby</div>
+    </div>
+    <div class="row game-board-row">
+      <div class="eight columns offset-by-two game-board"></div>
+    </div>
+    <div class="row footer-row">
+      <div class="footer">General Assembly - First Project - JB</div>
     </div>
   </div>
 </body>
