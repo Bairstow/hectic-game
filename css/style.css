@@ -45,9 +45,19 @@ body {
 }
 
 .game-board {
+  position: relative;
   margin-top: 10rem;
-  background-color: #555;
+  background-color: #333;
   border-radius: 2rem;
+}
+
+.game-tile {
+  background-color: #555;
+  border-radius: 1rem;
+}
+.game-piece {
+  position: absolute;
+  border-radius: 50%;
 }
 
 .footer-row {

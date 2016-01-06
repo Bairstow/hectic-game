@@ -33,9 +33,11 @@ var display = {
   viewportWidth: null,
   viewportHeight: null,
   pieceColors: ['#0F8', '#F08', '#08F', '#F80', '#80F', '#8F0'],
+  highlightColor: '#DDF',
   gameTiles: null,
-  selectedTile: null,
-  targetedTile: null,
+  gamePieces: null,
+  selectedPiece: null,
+  targetedPosition: null,
   groups: {
     $container: null,
     $logo: null,
@@ -102,20 +104,19 @@ var display = {
     var gameBoardWidth = display.elts.$gameBoard.width();
     display.elts.$gameBoard.css('height', String(gameBoardWidth) + 'px');
     display.groups.$gameBoard.css('visibility', 'visible');
-    display.redrawGameTiles();
+    display.redrawGameState();
   },
   // function to run at new game instantiation to setup background board tiles.
   drawGameTiles: function() {
-    // setup a mirrored set of arrays that will hold the tile DOM elements associated with each piece
+    // setup a mirrored set of arrays that will hold the tile DOM elements associated with each background tile
     var newTiles = [];
     _.each(_.range(game.data.boardSize), function(x) {
       var newCol = [];
       _.each(_.range(game.data.boardSize), function(y) {
         var newTile = helpers.elt('div','game-tile u-pull-left');
-        // set tile specific style properties (offsets *and color for testing*)
-        newTile.style.backgroundColor = display.pieceColors[game.data.gamePieces[x][y].category];
-        newTile.setAttribute('data-selected', false);
-        newTile.setAttribute('data-targeted', false);
+        // set tile specific style properties
+        newTile.setAttribute('data-x', x);
+        newTile.setAttribute('data-y', y);
         display.elts.$gameBoard.append($(newTile));
         newCol.push(newTile);
       });
@@ -123,21 +124,62 @@ var display = {
     });
     display.gameTiles = newTiles;
     // calculate and update tile properties based on current board size
-    var boardWidth = display.elts.$gameBoard.width();
+    var boardWidth = display.elts.$gameBoard.outerWidth();
     display.elts.$gameBoard.css('padding', String(boardWidth * 0.048) + 'px');
     var tileWidth = boardWidth * 0.9 / game.data.boardSize;
     $('.game-tile').css('width', String(tileWidth * 0.9) + 'px');
     $('.game-tile').css('height', String(tileWidth * 0.9) + 'px');
     $('.game-tile').css('margin', String(tileWidth * 0.05) + 'px');
-    $('.game-tile').css('border-radius', '1rem');
-    $('.game-tile').css('opacity', '0.8');
-    handlers.setTileSelection();
   },
-  redrawGameTiles: function() {
+  // function to render game pieces at every frame
+  drawGamePieces: function() {
+    var boardWidth = display.elts.$gameBoard.outerWidth();
+    display.elts.$gameBoard.css('padding', String(boardWidth * 0.048) + 'px');
+    var tileWidth = boardWidth * 0.9 / game.data.boardSize;
+    // setup a mirrored set of arrays that will hold the tile DOM elements associated with each piece
+    var newPieces = [];
+    _.each(_.range(game.data.boardSize), function(x) {
+      var newCol = [];
+      _.each(_.range(game.data.boardSize), function(y) {
+        var newPiece = helpers.elt('div','game-piece');
+        // set tile specific style properties
+        if (game.data.selectedPiece &&
+            game.data.selectedPiece[0] === x &&
+            game.data.selectedPiece[1] === y) {
+          newPiece.style.backgroundColor = display.highlightColor;
+        } else {
+          newPiece.style.backgroundColor = display.pieceColors[game.data.gamePieces[x][y].category];
+        }
+        newPiece.setAttribute('data-selected', false);
+        newPiece.setAttribute('data-targeted', false);
+        newPiece.setAttribute('data-x', x);
+        newPiece.setAttribute('data-y', y);
+        newPiece.style.top = String(boardWidth * 0.048 + y * tileWidth) + 'px';
+        newPiece.style.left = String(boardWidth * 0.048 + x * tileWidth) + 'px';
+        display.elts.$gameBoard.append($(newPiece));
+        newCol.push(newPiece);
+      });
+      newPieces.push(newCol);
+    });
+    display.gamePieces = newPieces;
+    $('.game-piece').css('width', String(tileWidth * 0.8) + 'px');
+    $('.game-piece').css('height', String(tileWidth * 0.8) + 'px');
+    $('.game-piece').css('margin', String(tileWidth * 0.1) + 'px');
+    handlers.setPieceSelection();
+  },
+  redrawGameState: function() {
     $('.game-tile').remove();
-    display.elts.$gameBoard.css('padding', '0px');
-    game.data.gamePieces = game.generateBoard();
+    $('.game-piece').remove();
     display.drawGameTiles();
+    display.drawGamePieces();
+  },
+  // handle display updates via animation frame requests
+  animate: function() {
+    window.requestAnimationFrame(display.animate);
+    // update game model
+    game.updateGameState();
+    // redraw live game objects
+    display.redrawGameState();
   }
 };
 
@@ -156,16 +198,13 @@ var handlers = {
   setResizeHandling: function() {
     // update dynamically generated elements on window resizing event.
   },
-  setTileSelection: function() {
-    $('.game-tile').on('mousedown', function(event) {
-      event.target.style.backgroundColor = '#FFF';
+  setPieceSelection: function() {
+    $('.game-piece').on('mousedown', function(event) {
       event.target.setAttribute('data-selected', true);
-      display.selectedTile = event.target;
       game.setSelectedPiece();
     });
-    $('.game-tile').on('mouseup', function() {
+    $('.game-piece').on('mouseup', function() {
       event.target.setAttribute('data-targeted', true);
-      display.targetedTile = event.target;
       game.setTargetedPiece();
       // todo clear highlighting on selected tile.
       game.attemptMovePiece();
@@ -183,8 +222,9 @@ var handlers = {
 var game = {
   // game related data
   data: {
-    // flag current game status
-    gameStatus: 0,
+    // flag current game status (filling, waiting, moving)
+    gameStatus: 'filling',
+    completionStatus: 0,
     boardSize: 8,
     selectedPiece: null,
     targetedPiece: null,
@@ -260,16 +300,16 @@ var game = {
   },
   // find selected piece from gamePieces
   setSelectedPiece: function() {
-    game.allPieces(display.gameTiles, function(tiles, pX, pY) {
-      if (tiles[pX][pY].getAttribute('data-selected') === 'true') {
+    game.allPieces(display.gamePieces, function(pieces, pX, pY) {
+      if (pieces[pX][pY].getAttribute('data-selected') === 'true') {
         game.data.selectedPiece = [pX, pY];
       }
     });
   },
   // find selected piece from gamePieces
   setTargetedPiece: function() {
-    game.allPieces(display.gameTiles, function(tiles, pX, pY) {
-      if (tiles[pX][pY].getAttribute('data-targeted') === 'true') {
+    game.allPieces(display.gamePieces, function(pieces, pX, pY) {
+      if (pieces[pX][pY].getAttribute('data-targeted') === 'true') {
         game.data.targetedPiece = [pX, pY];
       }
     });
@@ -279,15 +319,63 @@ var game = {
     console.log('Attempting to move...');
     console.log('From: ', game.data.selectedPiece);
     console.log('To: ', game.data.targetedPiece);
+    // check move validity. i.e. selection and target must share either row or column
+    if (game.data.selectedPiece[0] === game.data.targetedPiece[0] ||
+        game.data.selectedPiece[1] === game.data.targetedPiece[1]) {
+      game.movePiece(game.data.gamePieces, game.data.selectedPiece, game.data.targetedPiece);
+      game.clearSelections();
+    }
+  },
+  // function to move a piece to new position and update the displaced pieces in
+  // the shared row or column to the new positions
+  movePiece: function(pieces, oldPos, newPos) {
+    // two seperate handling cases depending on whether the move is in a column or in a row
+    // sanity check to catch and return if the selection and target positions are the same
+    if (oldPos[0] === newPos[0] && oldPos[1] === newPos[1]) {
+      return;
+    } else if (oldPos[0] === newPos[0]) {
+      // handle column movement first
+      // pull selected piece from current position.
+      var movingPiece = pieces[oldPos[0]].splice(oldPos[1],1)[0];
+      // push selected piece back to new position
+      if (oldPos[1] > newPos[1]) {
+        // pushing to an unshifted array position
+        pieces[oldPos[0]].splice(newPos[1], 0, movingPiece);
+      } else {
+        // new position has shifted due to pulling selected piece so index to reflect
+        pieces[oldPos[0]].splice(newPos[1], 0, movingPiece);
+      }
+    } else {
+      // otherwise movement will be in the horizontal
+      
+    }
+  },
+  clearSelections: function() {
+    game.data.selectedPiece = null;
+    game.data.targetedPiece = null;
+  },
+  // function containing game logic to be run on cycle
+  updateGameState: function() {
+    // filling takes priority over all other game states no piece movement during filling
+    if (game.gameStatus === 'filling') {
+      // disable player selection
+    } else if (game.gameStatus === 'waiting' && game.selectedPiece) {
+      // player is moving a piece and matching should be disabled
+    }
+  },
+  // group functions calls to be made on page initiation
+  init: function() {
+    $(document).ready(function() {
+      display.setHandles();
+      // make sure container is set to full page size.
+      display.setContainerHeight();
+      display.setFooterWidth();
+      display.showLandingPage();
+      handlers.setStartingHandlers();
+      game.data.gamePieces = game.generateBoard();
+      display.animate();
+    });
   }
 };
 
-$(document).ready(function() {
-  display.setHandles();
-  // make sure container is set to full page size.
-  display.setContainerHeight();
-  display.setFooterWidth();
-  display.showLandingPage();
-  handlers.setStartingHandlers();
-  game.data.gamePieces = game.generateBoard();
-});
+game.init();
