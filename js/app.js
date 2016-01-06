@@ -206,8 +206,6 @@ var handlers = {
     $('.game-piece').on('mouseup', function() {
       event.target.setAttribute('data-targeted', true);
       game.setTargetedPiece();
-      // todo clear highlighting on selected tile.
-      game.attemptMovePiece();
     });
   },
   // set all event handlers
@@ -223,7 +221,7 @@ var game = {
   // game related data
   data: {
     // flag current game status (filling, waiting, moving)
-    gameStatus: 'filling',
+    gameStatus: 'waiting',
     completionStatus: 0,
     boardSize: 8,
     selectedPiece: null,
@@ -239,9 +237,7 @@ var game = {
       _.each(_.range(game.data.boardSize), function(y) {
         var newPiece = {
           category: Math.floor(Math.random() * 6),
-          position: [x, y],
-          matched: false
-        }
+        };
         newCol.push(newPiece);
       });
       newPieces.push(newCol);
@@ -258,37 +254,56 @@ var game = {
     });
   },
   // piece operation checking match for given position
-  checkMatch: function(pieces, pX, pY) {
+  checkMatch: function(pieces, pX, pY, selectPos) {
     // removal of pieces requires all parts of match to be flagged so search will be done in all cardinal directions
     // three pieces in a row of the same category constitutes a match.
     var target = pieces[pX][pY];
+    var matched = false;
+    if (selectPos) {
+      target = pieces[selectPos[0]][selectPos[1]];
+      console.log('Checking selection at: ', selectPos);
+    }
     // search -y direction (up)
     if (pY >= 2 &&
         pieces[pX][pY-1].category === target.category &&
         pieces[pX][pY-2].category === target.category) {
-      target.matched = true;
-      return true;
+      matched = true;
     }
     // search +x direction (right)
-    if (pX < (game.boardSize - 2) &&
+    if (pX < (game.data.boardSize - 2) &&
         pieces[pX+1][pY].category === target.category &&
         pieces[pX+2][pY].category === target.category) {
-      target.matched = true;
-      return true;
+      matched = true;
     }
     // search +y direction (down)
-    if (pY < (game.boardSize - 2) &&
+    if (pY < (game.data.boardSize - 2) &&
         pieces[pX][pY+1].category === target.category &&
         pieces[pX][pY+2].category === target.category) {
-      target.matched = true;
-      return true;
+      matched = true;
     }
     // search -x direction (left)
     if (pX >= (2) &&
         pieces[pX-1][pY].category === target.category &&
         pieces[pX-2][pY].category === target.category) {
-      target.matched = true;
+      matched = true;
+    }
+    // search top-bottom (i.e. target is in the middle)
+    if (pY >= 1 && pY < (game.data.boardSize - 1) &&
+        pieces[pX][pY-1].category === target.category &&
+        pieces[pX][pY+1].category === target.category) {
+      matched = true;
+    }
+    // search left-right
+    if (pX >= 1 && pX < (game.data.boardSize - 1) &&
+        pieces[pX-1][pY].category === target.category &&
+        pieces[pX+1][pY].category === target.category) {
+      matched = true;
+    }
+    // return result based on findings
+    if (matched) {
       return true;
+    } else {
+      return false;
     }
   },
   // piece operation to randomise initial types so no matches to begin
@@ -319,9 +334,40 @@ var game = {
     // check move validity. i.e. selection and target must share either row or column
     if (game.data.selectedPiece[0] === game.data.targetedPiece[0] ||
         game.data.selectedPiece[1] === game.data.targetedPiece[1]) {
+      // move piece first to check the match then if it fails move it back.
       game.movePiece(game.data.gamePieces, game.data.selectedPiece, game.data.targetedPiece);
-      game.clearSelections();
+      var matched = false;
+      game.allPieces(game.data.gamePieces, function(pieces, pX, pY) {
+        if (game.checkMatch(pieces, pX, pY)) {
+          matched = true;
+        }
+      });
+      if (!matched) {
+        // new positions do not form a new match move the piece back to original position
+        game.movePiece(game.data.gamePieces, game.data.targetedPiece, game.data.selectedPiece);
+      }
     }
+    game.clearSelections();
+  },
+  // cycle through game pieces and build positional list of pieces that are currently matched
+  collectMatches: function() {
+    var matchList = [];
+    game.allPieces(game.data.gamePieces, function(pieces, pX, pY) {
+      if (game.checkMatch(pieces, pX, pY)) {
+        matchList.push([pX, pY]);
+      }
+    });
+    return matchList;
+  },
+  // function takes an element that is to be removed from the game board either through
+  // a match or by some other game function and the shifts all pieces above the target
+  // in the column down and generates a new pieces to fill the empty position at the top
+  replacePiece: function(pieces, oldPos) {
+    var removedPiece = pieces[oldPos[0]].splice(oldPos[1], 1);
+    var newPiece = {
+      category: Math.floor(Math.random() * 6),
+    };
+    pieces[oldPos[0]].unshift(newPiece);
   },
   // function to move a piece to new position and update the displaced pieces in
   // the shared row or column to the new positions
@@ -364,10 +410,22 @@ var game = {
   // function containing game logic to be run on cycle
   updateGameState: function() {
     // filling takes priority over all other game states no piece movement during filling
-    if (game.gameStatus === 'filling') {
-      // disable player selection
-    } else if (game.gameStatus === 'waiting' && game.selectedPiece) {
+    if (game.data.gameStatus === 'filling') {
+      // while new pieces are being generated loop
+      // todo disable player selection
+    } else if (game.data.gameStatus === 'waiting' &&
+               game.data.selectedPiece &&
+               game.data.targetedPiece) {
       // player is moving a piece and matching should be disabled
+      game.attemptMovePiece();
+      var newMatchPositions = game.collectMatches();
+      while (newMatchPositions.length > 0) {
+        console.log('New matches found.');
+        _.each(newMatchPositions, function(matchPosition) {
+          game.replacePiece(game.data.gamePieces, matchPosition);
+        });
+        newMatchPositions = game.collectMatches();
+      }
     }
   },
   // group functions calls to be made on page initiation
