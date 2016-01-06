@@ -316,9 +316,6 @@ var game = {
   },
   // run selection logic to see if piece move is valid and if so exchange piece positions
   attemptMovePiece: function() {
-    console.log('Attempting to move...');
-    console.log('From: ', game.data.selectedPiece);
-    console.log('To: ', game.data.targetedPiece);
     // check move validity. i.e. selection and target must share either row or column
     if (game.data.selectedPiece[0] === game.data.targetedPiece[0] ||
         game.data.selectedPiece[1] === game.data.targetedPiece[1]) {
@@ -336,18 +333,28 @@ var game = {
     } else if (oldPos[0] === newPos[0]) {
       // handle column movement first
       // pull selected piece from current position.
-      var movingPiece = pieces[oldPos[0]].splice(oldPos[1],1)[0];
+      var movingPiece = pieces[oldPos[0]].splice(oldPos[1], 1)[0];
       // push selected piece back to new position
-      if (oldPos[1] > newPos[1]) {
-        // pushing to an unshifted array position
-        pieces[oldPos[0]].splice(newPos[1], 0, movingPiece);
-      } else {
-        // new position has shifted due to pulling selected piece so index to reflect
-        pieces[oldPos[0]].splice(newPos[1], 0, movingPiece);
-      }
+      pieces[oldPos[0]].splice(newPos[1], 0, movingPiece);
     } else {
       // otherwise movement will be in the horizontal
-      
+      var movingPiece = pieces[oldPos[0]].splice(oldPos[1], 1)[0];
+      var moveDirection = (oldPos[0] < newPos[0] ? 1:-1);
+      var currentCol = oldPos[0];
+      var targetCol = oldPos[0] + moveDirection;
+      // until target column is move the piece in the adjoining column into the vacated position
+      while (targetCol !== newPos[0]) {
+        // move displaced piece
+        var displacedPiece = pieces[targetCol].splice(oldPos[1], 1)[0];
+        pieces[currentCol].splice(oldPos[1], 0, displacedPiece);
+        // update positioning variables
+        targetCol += moveDirection;
+        currentCol += moveDirection;
+      }
+      // target column reached so insert the selected piece at its new position
+      var displacedPiece = pieces[targetCol].splice(oldPos[1], 1)[0];
+      pieces[currentCol].splice(oldPos[1], 0, displacedPiece);
+      pieces[targetCol].splice(oldPos[1], 0, movingPiece);
     }
   },
   clearSelections: function() {
