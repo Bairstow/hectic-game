@@ -19,6 +19,7 @@ body {
 }
 .nav-bar-svg {
   position:absolute;
+  fill: none;
   left: 0px;
 }
 
@@ -55,6 +56,8 @@ body {
 }
 .orange-svg-text {
   fill: #F4B350;
+}
+.site-icon {
 }
 .ion-person {
   margin-left: 10px;
@@ -111,6 +114,7 @@ body {
   left: 0px;
 }
 .game-tile {
+  position: absolute;
   background-color: #555;
   border-radius: 1rem;
 }

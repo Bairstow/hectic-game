@@ -116,20 +116,12 @@ var game = {
     }
   },
   // find selected piece from gamePieces
-  setSelectedPiece: function() {
-    game.allPieces(display.gamePieces, function(pieces, pX, pY) {
-      if (pieces[pX][pY].getAttribute('data-selected') === 'true') {
-        game.data.selectedPiece = [pX, pY];
-      }
-    });
+  setSelectedPiece: function(pX, pY) {
+    game.data.selectedPiece = [pX, pY];
   },
   // find selected piece from gamePieces
-  setTargetedPiece: function() {
-    game.allPieces(display.gamePieces, function(pieces, pX, pY) {
-      if (pieces[pX][pY].getAttribute('data-targeted') === 'true') {
-        game.data.targetedPiece = [pX, pY];
-      }
-    });
+  setTargetedPiece: function(pX, pY) {
+    game.data.targetedPiece = [pX, pY];
   },
   // run selection logic to see if piece move is valid and if so exchange piece positions
   attemptMovePiece: function() {
@@ -278,7 +270,6 @@ var game = {
         game.data.time = 0;
         game.data.multiplier = 0;
         game.data.runStatus = 0;
-        handlers.setGameHandlers();
       }
     }
     // filling takes priority over all other game states no piece movement during filling
@@ -306,7 +297,6 @@ var game = {
     game.data.runStatus = 1;
     display.drawGameBreaks();
     display.setGameEnabled();
-    handlers.setGameHandlers();
   },
   // group functions calls to be made on page initiation
   init: function() {
@@ -316,8 +306,8 @@ var game = {
       display.drawNavBar();
       display.setFooterWidth();
       display.showLandingPage();
-      handlers.setStartingHandlers();
       game.data.gamePieces = game.generateBoard();
+      handlers.setAll();
       display.animate();
   }
 };

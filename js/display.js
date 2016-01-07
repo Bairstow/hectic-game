@@ -138,6 +138,9 @@ var display = {
   drawGameTiles: function() {
     // clear current render
     $('.game-tile').remove();
+    // calculate and update tile properties based on current board size
+    var boardWidth = display.elts.$gameBoard.outerWidth();
+    var tileWidth = Math.floor((boardWidth - 2) / game.data.boardSize);
     // setup a mirrored set of arrays that will hold the tile DOM elements associated with each background tile
     var newTiles = [];
     _.each(_.range(game.data.boardSize), function(x) {
@@ -147,16 +150,14 @@ var display = {
         // set tile specific style properties
         newTile.setAttribute('data-x', x);
         newTile.setAttribute('data-y', y);
+        newTile.style.top = String(y * tileWidth) + 'px';
+        newTile.style.left = String(x * tileWidth) + 'px';
         display.elts.$gameBoard.append($(newTile));
         newCol.push(newTile);
       });
       newTiles.push(newCol);
     });
     display.gameTiles = newTiles;
-    // calculate and update tile properties based on current board size
-    var boardWidth = display.elts.$gameBoard.outerWidth();
-    // display.elts.$gameBoard.css('padding', String(boardWidth * 0.048) + 'px');
-    var tileWidth = Math.floor((boardWidth - 2) / game.data.boardSize);
     $('.game-tile').css('width', String(tileWidth * 0.9) + 'px');
     $('.game-tile').css('height', String(tileWidth * 0.9) + 'px');
     $('.game-tile').css('margin', String(tileWidth * 0.05) + 'px');
@@ -182,8 +183,6 @@ var display = {
         } else {
           newPiece.style.backgroundColor = display.pieceColors[game.data.gamePieces[x][y].category];
         }
-        newPiece.setAttribute('data-selected', false);
-        newPiece.setAttribute('data-targeted', false);
         newPiece.setAttribute('data-x', x);
         newPiece.setAttribute('data-y', y);
         newPiece.style.top = String(y * tileWidth) + 'px';
@@ -197,7 +196,6 @@ var display = {
     $('.game-piece').css('width', String(tileWidth * 0.7) + 'px');
     $('.game-piece').css('height', String(tileWidth * 0.7) + 'px');
     $('.game-piece').css('margin', String(tileWidth * 0.15) + 'px');
-    handlers.setPieceSelection();
   },
   drawGameMultiplier: function() {
     // handle drawing logic for the multiplier display to the right of the game area
@@ -286,6 +284,7 @@ var display = {
     breakBreakText.textContent = 'break';
     breakBreakText.setAttribute('x', String(cWidth * 0.07));
     breakBreakText.setAttribute('y', String(cHeight * 0.7));
+    breakBreakText.style.fill = '#6A6D6D';
     var breakPieceText = helpers.eltNS('text', 'game-breaks-text btn-text');
     breakPieceText.textContent = 'piece';
     breakPieceText.setAttribute('x', String(cWidth * 0.3));
@@ -372,6 +371,8 @@ var display = {
     // set nav bar sizing properties based on current dimensions
     display.groups.$navBar.css('font-size', String(Math.floor(vportCurve * 1.2)) + 'px');
     display.groups.$navBar.css('line-height', String(Math.floor(vportCurve * 1.8)) + 'px');
+    // set newly created DOM handles
+    display.setHandles();
   },
   drawGameArea: function() {
     // handle draw procedure for game area background. (border and fill)
@@ -475,7 +476,6 @@ var display = {
     display.groups.$gameArea.append($(gameMultiplier));
     // set newly created DOM handles
     display.setHandles();
-    handlers.setStartRoundButton();
   },
   setGameEnabled: function() {
     // set visual properties relating to game running
