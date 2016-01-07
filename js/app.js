@@ -273,7 +273,7 @@ var game = {
       display.setHandles();
       // make sure container is set to full page size.
       display.setContainerHeight();
-      display.drawNavBarBorder();
+      display.drawNavBar();
       display.setFooterWidth();
       display.showLandingPage();
       handlers.setStartingHandlers();

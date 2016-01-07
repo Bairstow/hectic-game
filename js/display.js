@@ -82,9 +82,7 @@ var display = {
     display.elts.$gameBoard.css('height', String(gameBoardWidth) + 'px');
     display.groups.$gameBoardRow.css('visibility', 'visible');
     // draw static elements
-    display.drawNavBarBorder();
-    display.drawGameArea();
-    display.drawGameBreaks();
+    display.redrawGameStatic();
     // draw active elements
     display.redrawGameState();
   },
@@ -97,11 +95,7 @@ var display = {
     gameTimerSVG.setAttribute('width', String(cWidth));
     gameTimerSVG.setAttribute('height', String(cHeight));
     var gameTimerText = helpers.eltNS('text', 'game-timer-text');
-    if (game.data.runStatus === 0) {
-      gameTimerText.textContent = 'Click to begin.';
-    } else if (game.data.runStatus === 1) {
-      gameTimerText.textContent = 'time: ' + String((game.data.time).toFixed(2)) + 's';
-    }
+    gameTimerText.textContent = 'time: ' + String((game.data.time).toFixed(2)) + 's';
     gameTimerText.setAttribute('x', '0');
     gameTimerText.setAttribute('y', String(cHeight * 0.8));
     gameTimerSVG.appendChild(gameTimerText);
@@ -293,9 +287,18 @@ var display = {
     display.drawGamePieces();
     display.drawGameMultiplier();
   },
-  drawNavBarBorder: function() {
+  redrawGameStatic: function() {
+    // called on resize and initialising.
+    display.drawGameArea();
+    display.drawNavBar();
+    display.drawGameBreaks();
+  },
+  drawNavBar: function() {
     // handle draw procedure for nav bar border. (elements should be dynamically sized)
     $('.nav-bar-svg').remove();
+    $('.site-icon').remove();
+    $('.player-detail').remove();
+    $('.nav-icon').remove();
     var cWidth = display.groups.$container.width();
     var viewportHeight = display.getViewportHeight();
     var vportCurve = Math.floor(viewportHeight * 0.025);
@@ -312,6 +315,29 @@ var display = {
     navBarPath.setAttribute('d', pathData);
     navBarSVG.appendChild(navBarPath);
     display.groups.$navBar.append($(navBarSVG));
+    // dynamically produce nav bar elements for proper display on resizing
+    var navBarHome = helpers.elt('div', 'two columns u-pull-left site-icon');
+    navBarHome.style.paddingTop = String(Math.floor(vportCurve * 0.2)) + 'px';
+    var navBarHomeIcon = helpers.elt('i', 'icon ion-bonfire');
+    navBarHome.appendChild(navBarHomeIcon);
+    var navBarProfile = helpers.elt('div', 'four columns u-pull-right player-detail');
+    navBarProfile.style.paddingTop = String(Math.floor(vportCurve * 0.2)) + 'px';
+    var navBarProfileName = helpers.elt('div', 'profile-name');
+    var navBarProfileIcon = helpers.elt('i', 'icon ion-person');
+    navBarProfileName.textContent = 'FatDavo';
+    navBarProfileName.style.display = 'inline-block';
+    navBarProfileIcon.style.display = 'inline-block';
+    navBarProfile.appendChild(navBarProfileName);
+    navBarProfile.appendChild(navBarProfileIcon);
+    var navBarNavicon = helpers.elt('div', 'two columns u-pull-right nav-icon');
+    var navBarNaviconIcon = helpers.elt('i', 'icon ion-navicon-round');
+    navBarNavicon.appendChild(navBarNaviconIcon);
+    display.groups.$navBar.append($(navBarHome));
+    display.groups.$navBar.append($(navBarNavicon));
+    display.groups.$navBar.append($(navBarProfile));
+    // set nav bar sizing properties based on current dimensions
+    display.groups.$navBar.css('font-size', String(Math.floor(vportCurve * 1.2)) + 'px');
+    display.groups.$navBar.css('line-height', String(Math.floor(vportCurve * 1.8)) + 'px');
   },
   drawGameArea: function() {
     // handle draw procedure for game area background. (border and fill)
@@ -325,7 +351,7 @@ var display = {
     var gameAreaSVG = helpers.eltNS('svg', 'game-area-svg');
     gameAreaSVG.setAttribute('width', String(Math.floor(gameBox)));
     gameAreaSVG.setAttribute('height', String(Math.floor(gameBox)));
-    gameAreaSVG.style.marginTop = String(viewportHeight * 0.02) + 'px';
+    gameAreaSVG.style.marginTop = String(Math.round(viewportHeight * 0.02)) + 'px';
     var gameAreaOffset = 0;
     if (gameBox < cWidth) {
       gameAreaOffset = (cWidth - gameBox) / 2;
@@ -356,8 +382,21 @@ var display = {
       String(gameBox * 0.7) + ' 12 L ' + String(gameBox * 0.65) + ' ' + String(gameBox * 0.16) +
       ' L 12 ' + String(gameBox * 0.2);
     gameAreaFill.setAttribute('d', fillPathData);
-    gameAreaSVG.appendChild(gameAreaFill);
+    var gameAreaNewRound = helpers.eltNS('path', 'game-area-new-round');
+    var newRoundPathData = 'M' + String(gameBox * 0.75) + ' 20 L ' + String(gameBox - gCorner - 8) +
+      ' 20 C ' + String(gameBox - gCorner - 8) + ' ' + String(gameBox * 0.14) + ', ' +
+      String(gameBox - gCorner - 8) + ' ' + String(gameBox * 0.14) + ', ' +
+      String(gameBox * 0.7) + ' ' + String(gameBox * 0.14) + ' L ' + String(gameBox * 0.75) + ' 20';
+    gameAreaNewRound.setAttribute('d', newRoundPathData);
+    var newRoundText = helpers.eltNS('text', 'new-round-text');
+    newRoundText.textContent = 'new\nround';
+    newRoundText.style.whiteSpace = 'normal';
+    newRoundText.setAttribute('x', String(Math.floor(gameBox * 0.76)));
+    newRoundText.setAttribute('y', String(Math.floor(gameBox * 0.10)));
     gameAreaSVG.appendChild(gameAreaBorder);
+    gameAreaSVG.appendChild(gameAreaFill);
+    gameAreaSVG.appendChild(gameAreaNewRound);
+    gameAreaSVG.appendChild(newRoundText);
     display.groups.$gameArea.append($(gameAreaSVG));
     // clear current game elements
     $('.game-timer').remove();
@@ -395,27 +434,31 @@ var display = {
     // attach game elements to game area
     display.groups.$gameArea.append($(gameTimer));
     display.groups.$gameArea.append($(gameScore));
+    display.groups.$gameArea.append($(gameBreaks));
     display.groups.$gameArea.append($(gameBoard));
     display.groups.$gameArea.append($(gameMultiplier));
-    display.groups.$gameArea.append($(gameBreaks));
     // set newly created DOM handles
     display.setHandles();
     handlers.setGameHandlers();
   },
   setGameEnabled: function() {
     // set visual properties relating to game running
+    $('.game-timer').css('opacity', '1')
     $('.game-score').css('opacity', '1');
     $('.game-board').css('opacity', '1');
     $('.game-multiplier').css('opacity', '1');
-    $('.primary-fill-path').css('fill', '#F4B350');
+    $('.primary-fill-path .').css('fill', '#F4B350');
+    $('.game-area-new-round').css('fill', '#9A9D9D');
     $('.game-breaks-text').css('opacity', '1');
   },
   setGameDisabled: function() {
-    // set visual properties relating to game waiting to
+    // set visual properties relating to game waiting to run
+    $('.game-timer').css('opacity', '0.4');
     $('.game-score').css('opacity', '0.4');
     $('.game-board').css('opacity', '0.4');
     $('.game-multiplier').css('opacity', '0.4');
-    $('.primary-fill-path').css('fill', '#DADDDD');
+    $('.primary-fill-path').css('fill', '#9A9D9D');
+    $('.game-area-new-round').css('fill', '#F4B350');
     $('.game-breaks-text').css('opacity', '0.4');
   },
   // handle display updates via animation frame requests

@@ -12,11 +12,7 @@ var handlers = {
   },
   setResizeHandling: function() {
     // update dynamically generated elements on window resizing event.
-    $(window).resize(function() {
-      display.drawGameArea();
-      display.drawNavBarBorder();
-      display.drawGameBreaks();
-    });
+    $(window).resize(display.redrawGameStatic);
   },
   setPieceSelection: function() {
     $('.game-piece').on('mousedown', function(event) {
