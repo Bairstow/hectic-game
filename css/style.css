@@ -10,7 +10,7 @@ body {
 .nav-bar {
   position: relative;
   width: 100%;
-  color: #9E6B39;
+  color: #F4B350;
   background-color: #FFF;
   font-size: 120%;
   height: 5rem;
@@ -33,6 +33,18 @@ body {
   stroke-width: 4;
   stroke-linecap: round;
   fill: #DADDDD;
+}
+.bkg-fill-path {
+  stroke: none;
+  fill: #FFF;
+}
+.primary-fill-path {
+  stroke: none;
+  fill: #F4B350;
+}
+.bar-fill-path {
+  stroke: none;
+  fill: #322812;
 }
 .ion-person {
   margin-left: 10px;
@@ -87,9 +99,12 @@ body {
   position: absolute;
   border-radius: 50%;
 }
+.game-breaks-text {
+  font-size: 60%;
+}
 .game-element {
   position: absolute;
-  border: solid 2px red;
+  /*border: solid 2px red;*/
 }
 
 .footer-row {

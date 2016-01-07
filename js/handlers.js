@@ -12,6 +12,11 @@ var handlers = {
   },
   setResizeHandling: function() {
     // update dynamically generated elements on window resizing event.
+    $(window).resize(function() {
+      display.drawGameArea();
+      display.drawNavBarBorder();
+      display.drawGameBreaks();
+    });
   },
   setPieceSelection: function() {
     $('.game-piece').on('mousedown', function(event) {
@@ -23,10 +28,17 @@ var handlers = {
       game.setTargetedPiece();
     });
   },
+  setStartRoundButton: function() {
+    $('.game-timer').on('click', game.startNewRound);
+  },
   // set all event handlers
   setStartingHandlers: function() {
     handlers.setHomeButton();
     handlers.setPlayButton();
     handlers.setResizeHandling();
+  },
+  // set all game related handlers
+  setGameHandlers: function() {
+    handlers.setStartRoundButton();
   }
 };

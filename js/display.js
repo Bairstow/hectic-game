@@ -81,12 +81,51 @@ var display = {
     var gameBoardWidth = display.elts.$gameBoard.width();
     display.elts.$gameBoard.css('height', String(gameBoardWidth) + 'px');
     display.groups.$gameBoardRow.css('visibility', 'visible');
+    // draw static elements
     display.drawNavBarBorder();
     display.drawGameArea();
+    display.drawGameBreaks();
+    // draw active elements
     display.redrawGameState();
+  },
+  drawGameTimer: function() {
+    // handle drawing logic for displaying the game timer above the game area
+    $('.game-timer-svg').remove();
+    var cWidth = Math.floor($('.game-timer').width());
+    var cHeight = Math.floor($('.game-timer').height());
+    var gameTimerSVG = helpers.eltNS('svg', 'game-timer-svg');
+    gameTimerSVG.setAttribute('width', String(cWidth));
+    gameTimerSVG.setAttribute('height', String(cHeight));
+    var gameTimerText = helpers.eltNS('text', 'game-timer-text');
+    if (game.data.runStatus === 0) {
+      gameTimerText.textContent = 'Click to begin.';
+    } else if (game.data.runStatus === 1) {
+      gameTimerText.textContent = 'time: ' + String((game.data.time).toFixed(2)) + 's';
+    }
+    gameTimerText.setAttribute('x', '0');
+    gameTimerText.setAttribute('y', String(cHeight * 0.8));
+    gameTimerSVG.appendChild(gameTimerText);
+    $('.game-timer').append($(gameTimerSVG));
+  },
+  drawGameScore: function() {
+    // handle drawing logic for displaying the game score above the game area
+    $('.game-score-svg').remove();
+    var cWidth = Math.floor($('.game-score').width());
+    var cHeight = Math.floor($('.game-score').height());
+    var gameScoreSVG = helpers.eltNS('svg', 'game-score-svg');
+    gameScoreSVG.setAttribute('width', String(cWidth));
+    gameScoreSVG.setAttribute('height', String(cHeight));
+    var gameScoreText = helpers.eltNS('text', 'game-score-text');
+    gameScoreText.textContent = 'score: ' + String((game.data.score * 10).toFixed(0));
+    gameScoreText.setAttribute('x', '0');
+    gameScoreText.setAttribute('y', String(cHeight * 0.8));
+    gameScoreSVG.appendChild(gameScoreText);
+    $('.game-score').append($(gameScoreSVG));
   },
   // function to run at new game instantiation to setup background board tiles.
   drawGameTiles: function() {
+    // clear current render
+    $('.game-tile').remove();
     // setup a mirrored set of arrays that will hold the tile DOM elements associated with each background tile
     var newTiles = [];
     _.each(_.range(game.data.boardSize), function(x) {
@@ -105,16 +144,18 @@ var display = {
     // calculate and update tile properties based on current board size
     var boardWidth = display.elts.$gameBoard.outerWidth();
     // display.elts.$gameBoard.css('padding', String(boardWidth * 0.048) + 'px');
-    var tileWidth = boardWidth * 0.9 / game.data.boardSize;
+    var tileWidth = Math.floor((boardWidth - 2) / game.data.boardSize);
     $('.game-tile').css('width', String(tileWidth * 0.9) + 'px');
     $('.game-tile').css('height', String(tileWidth * 0.9) + 'px');
     $('.game-tile').css('margin', String(tileWidth * 0.05) + 'px');
   },
   // function to render game pieces at every frame
   drawGamePieces: function() {
+    // clear current render
+    $('.game-piece').remove();
     var boardWidth = display.elts.$gameBoard.outerWidth();
     //display.elts.$gameBoard.css('padding', String(boardWidth * 0.048) + 'px');
-    var tileWidth = boardWidth * 0.9 / game.data.boardSize;
+    var tileWidth = Math.floor((boardWidth - 2) / game.data.boardSize);
     // setup a mirrored set of arrays that will hold the tile DOM elements associated with each piece
     var newPieces = [];
     _.each(_.range(game.data.boardSize), function(x) {
@@ -133,24 +174,124 @@ var display = {
         newPiece.setAttribute('data-targeted', false);
         newPiece.setAttribute('data-x', x);
         newPiece.setAttribute('data-y', y);
-        newPiece.style.top = String(boardWidth * 0.048 + y * tileWidth) + 'px';
-        newPiece.style.left = String(boardWidth * 0.048 + x * tileWidth) + 'px';
+        newPiece.style.top = String(y * tileWidth) + 'px';
+        newPiece.style.left = String(x * tileWidth) + 'px';
         display.elts.$gameBoard.append($(newPiece));
         newCol.push(newPiece);
       });
       newPieces.push(newCol);
     });
     display.gamePieces = newPieces;
-    $('.game-piece').css('width', String(tileWidth * 0.8) + 'px');
-    $('.game-piece').css('height', String(tileWidth * 0.8) + 'px');
-    $('.game-piece').css('margin', String(tileWidth * 0.1) + 'px');
+    $('.game-piece').css('width', String(tileWidth * 0.7) + 'px');
+    $('.game-piece').css('height', String(tileWidth * 0.7) + 'px');
+    $('.game-piece').css('margin', String(tileWidth * 0.15) + 'px');
     handlers.setPieceSelection();
   },
+  drawGameMultiplier: function() {
+    // handle drawing logic for the multiplier display to the right of the game area
+    $('.game-multiplier-svg').remove();
+    // drawing visual bar indicator
+    var cWidth = Math.floor($('.game-multiplier').width());
+    var cHeight = Math.floor($('.game-multiplier').height());
+    var barHeight = Math.floor(cHeight * 0.75);
+    var barLevel = Math.floor(barHeight * game.data.multiplier);
+    var gameMultArea = helpers.eltNS('svg', 'game-multiplier-svg');
+    gameMultArea.setAttribute('width', String(cWidth));
+    gameMultArea.setAttribute('height', String(cHeight));
+    var gameMultBar = helpers.eltNS('path', 'game-multiplier-bar bar-fill-path');
+    var barPathData = 'M0 ' + String(cHeight - barHeight) + ' L 0 ' + String(cHeight) +
+      ' L ' + String(cWidth) + ' ' + String(cHeight) + ' L ' + String(cWidth) +
+      ' ' + String(cHeight - barHeight);
+    gameMultBar.setAttribute('d', barPathData);
+    var gameMultBarLevel = helpers.eltNS('path', 'game-multiplier-bar primary-fill-path');
+    var barLevelPathData = 'M0 ' + String(cHeight - barLevel) + ' L 0 ' + String(cHeight) +
+      ' L ' + String(cWidth) + ' ' + String(cHeight) + ' L ' + String(cWidth) +
+      ' ' + String(cHeight - barLevel);
+    gameMultBarLevel.setAttribute('d', barLevelPathData);
+    var gameMultText = helpers.eltNS('text', 'game-multiplier-text');
+    gameMultText.textContent = String((game.data.multiplier * 100).toFixed(2)) + '%';
+    gameMultText.setAttribute('x', String(cWidth * 0.2));
+    gameMultText.setAttribute('y', String(cHeight * 0.2));
+    gameMultArea.appendChild(gameMultBar);
+    gameMultArea.appendChild(gameMultBarLevel);
+    gameMultArea.appendChild(gameMultText);
+    $('.game-multiplier').append($(gameMultArea));
+  },
+  drawGameBreaks: function() {
+    // handle drawing logic for break buttons under the game board
+    $('.game-breaks-svg').remove();
+    var cWidth = Math.floor($('.game-breaks').width());
+    var cHeight = Math.floor($('.game-breaks').height());
+    var cCorner = Math.floor(cHeight * 0.4);
+    var gameBreaksSVG = helpers.eltNS('svg', 'game-breaks-svg');
+    gameBreaksSVG.setAttribute('width', String(cWidth));
+    gameBreaksSVG.setAttribute('height', String(cHeight));
+    var gameBreaksBkg = helpers.eltNS('path', 'game-breaks-bkg bkg-fill-path');
+    var bkgPathData = 'M0 ' + String(cCorner) + ' L 0 ' + String(cHeight - cCorner) +
+      ' C 0 ' + String(cHeight) + ', 0 ' + String(cHeight) + ', ' +
+      String(cCorner) + ' ' + String(cHeight) + ' L ' + String(cWidth * 0.98) +
+      ' ' + String(cHeight) + ' L ' + String(cWidth) + ' ' +
+      String(cHeight * 0.5) + ' L ' + String(cWidth * 0.98) + ' 0 L ' +
+      String(cCorner) + ' 0 C 0 0, 0 0, 0 ' + String(cCorner);
+    gameBreaksBkg.setAttribute('d', bkgPathData);
+    var gameBreaksBoard = helpers.eltNS('path', 'game-breaks-board primary-fill-path');
+    var boardBtnPathData = 'M' + String(cWidth * 0.76 - 4) + ' 2 L ' +
+      String(cWidth * 0.78 - 4) + ' ' + String(cHeight * 0.5) + ' L ' +
+      String(cWidth * 0.76 - 4) + ' ' + String(cHeight - 2) + ' L ' +
+      String(cWidth * 0.98 - 4) + ' ' + String(cHeight - 2) + ' L ' +
+      String(cWidth - 4) + ' ' + String(cHeight * 0.5) + ' L ' +
+      String(cWidth * 0.98 - 4) + ' 2 L ' + String(cWidth * 0.76 - 4) + ' 2';
+    gameBreaksBoard.setAttribute('d', boardBtnPathData);
+    var gameBreaksRow = helpers.eltNS('path', 'game-breaks-row primary-fill-path');
+    var rowBtnPathData = 'M' + String(cWidth * 0.52 - 8) + ' 2 L ' +
+      String(cWidth * 0.54 - 8) + ' ' + String(cHeight * 0.5) + ' L ' +
+      String(cWidth * 0.52 - 8) + ' ' + String(cHeight - 2) + ' L ' +
+      String(cWidth * 0.76 - 8) + ' ' + String(cHeight - 2) + ' L ' +
+      String(cWidth * 0.78 - 8) + ' ' + String(cHeight * 0.5) + ' L ' +
+      String(cWidth * 0.76 - 8) + ' 2 L ' + String(cWidth * 0.52 - 8) + ' 2';
+    gameBreaksRow.setAttribute('d', rowBtnPathData);
+    var gameBreaksPiece = helpers.eltNS('path', 'game-breaks-piece primary-fill-path');
+    var pieceBtnPathData = 'M' + String(cWidth * 0.28 - 12) + ' 2 L ' +
+      String(cWidth * 0.30 - 12) + ' ' + String(cHeight * 0.5) + ' L ' +
+      String(cWidth * 0.28 - 12) + ' ' + String(cHeight - 2) + ' L ' +
+      String(cWidth * 0.52 - 12) + ' ' + String(cHeight - 2) + ' L ' +
+      String(cWidth * 0.54 - 12) + ' ' + String(cHeight * 0.5) + ' L ' +
+      String(cWidth * 0.52 - 12) + ' 2 L ' + String(cWidth * 0.28 - 12) + ' 2';
+    gameBreaksPiece.setAttribute('d', pieceBtnPathData);
+    var breakBreakText = helpers.eltNS('text', 'game-breaks-text help-text');
+    breakBreakText.textContent = 'break';
+    breakBreakText.setAttribute('x', String(cWidth * 0.1));
+    breakBreakText.setAttribute('y', String(cHeight * 0.7));
+    var breakPieceText = helpers.eltNS('text', 'game-breaks-text btn-text');
+    breakPieceText.textContent = 'piece';
+    breakPieceText.setAttribute('x', String(cWidth * 0.34));
+    breakPieceText.setAttribute('y', String(cHeight * 0.7));
+    var breakRowText = helpers.eltNS('text', 'game-breaks-text btn-text');
+    breakRowText.textContent = 'row';
+    breakRowText.setAttribute('x', String(cWidth * 0.56));
+    breakRowText.setAttribute('y', String(cHeight * 0.7));
+    var breakBoardText = helpers.eltNS('text', 'game-breaks-text btn-text');
+    breakBoardText.textContent = 'board';
+    breakBoardText.setAttribute('x', String(cWidth * 0.80));
+    breakBoardText.setAttribute('y', String(cHeight * 0.7));
+    gameBreaksSVG.appendChild(gameBreaksBkg);
+    gameBreaksSVG.appendChild(gameBreaksPiece);
+    gameBreaksSVG.appendChild(gameBreaksRow);
+    gameBreaksSVG.appendChild(gameBreaksBoard);
+    gameBreaksSVG.appendChild(breakBreakText);
+    gameBreaksSVG.appendChild(breakPieceText);
+    gameBreaksSVG.appendChild(breakRowText);
+    gameBreaksSVG.appendChild(breakBoardText);
+    $('.game-breaks').append($(gameBreaksSVG));
+  },
   redrawGameState: function() {
-    $('.game-tile').remove();
-    $('.game-piece').remove();
+    // active elements to be redrawn on each frame.
+    // static elements such as the break buttons are redrawn only on window resizing.
+    display.drawGameTimer();
+    display.drawGameScore();
     display.drawGameTiles();
     display.drawGamePieces();
+    display.drawGameMultiplier();
   },
   drawNavBarBorder: function() {
     // handle draw procedure for nav bar border. (elements should be dynamically sized)
@@ -259,6 +400,23 @@ var display = {
     display.groups.$gameArea.append($(gameBreaks));
     // set newly created DOM handles
     display.setHandles();
+    handlers.setGameHandlers();
+  },
+  setGameEnabled: function() {
+    // set visual properties relating to game running
+    $('.game-score').css('opacity', '1');
+    $('.game-board').css('opacity', '1');
+    $('.game-multiplier').css('opacity', '1');
+    $('.primary-fill-path').css('fill', '#F4B350');
+    $('.game-breaks-text').css('opacity', '1');
+  },
+  setGameDisabled: function() {
+    // set visual properties relating to game waiting to
+    $('.game-score').css('opacity', '0.4');
+    $('.game-board').css('opacity', '0.4');
+    $('.game-multiplier').css('opacity', '0.4');
+    $('.primary-fill-path').css('fill', '#DADDDD');
+    $('.game-breaks-text').css('opacity', '0.4');
   },
   // handle display updates via animation frame requests
   animate: function() {

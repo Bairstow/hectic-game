@@ -21,11 +21,14 @@ var game = {
   data: {
     // flag current game status (filling, waiting, moving)
     gameStatus: 'waiting',
-    completionStatus: 0,
+    runStatus: 0,
     boardSize: 8,
     selectedPiece: null,
     targetedPiece: null,
     gamePieces: null,
+    startTime: null,
+    time: 0,
+    multiplier: 0,
     score: 0
   },
   // function for generating initial board positions
@@ -208,6 +211,25 @@ var game = {
   },
   // function containing game logic to be run on cycle
   updateGameState: function() {
+    // initial checks and handling of run status
+    if (game.data.runStatus === 0) {
+      display.setGameDisabled();
+    } else if (game.data.runStatus === 1) {
+      display.setGameEnabled();
+      var newTS = Date.now();
+      var oldTS = game.data.startTime;
+      var elapsed = newTS - oldTS;
+      console.log('elapsed time: ', elapsed);
+      game.data.startTime = newTS;
+      game.data.time -= elapsed/1000;
+      if (game.data.time < 0) {
+        // timer has run out and round has been completed
+        game.data.time = 0;
+        game.data.multiplier = 0;
+        game.data.runStatus = 0;
+        handlers.setGameHandlers();
+      }
+    }
     // filling takes priority over all other game states no piece movement during filling
     if (game.data.gameStatus === 'filling') {
       // while new pieces are being generated loop
@@ -222,10 +244,29 @@ var game = {
         console.log('New matches found.');
         _.each(newMatchPositions, function(matchPosition) {
           game.replacePiece(game.data.gamePieces, matchPosition);
+          // whenever a piece is removed increment the score
+          game.data.score += (1 * (1 + game.data.multiplier));
         });
+        // increment based on number of matches found (matching more than 2 in a cycle bumps)
+        if (newMatchPositions.length > 2) {
+          game.data.multiplier += 0.03 * (newMatchPositions.length - 2);
+          if (game.data.multiplier > 1) { game.data.multiplier = 1 };
+        }
         newMatchPositions = game.collectMatches();
       }
     }
+    // decrement the multiplier based on time
+    if (game.data.multiplier > 0) {
+      game.data.multiplier -= Math.min(0.001, game.data.multiplier);
+    }
+  },
+  startNewRound: function() {
+    // set initial conditions
+    game.data.startTime = Date.now();
+    game.data.time = 30;
+    game.data.score = 0;
+    game.data.runStatus = 1;
+    display.setGameEnabled();
   },
   // group functions calls to be made on page initiation
   init: function() {
