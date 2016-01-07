@@ -14,6 +14,12 @@ var handlers = {
     // update dynamically generated elements on window resizing event.
     $(window).resize(display.redrawGameStatic);
   },
+  setMouseBehaviour: function() {
+    // prevent cursor changes
+    $(window).on('mouseover', function(event) {
+      event.preventDefault();
+    });
+  },
   setPieceSelection: function() {
     $('.game-piece').on('mousedown', function(event) {
       event.target.setAttribute('data-selected', true);
@@ -25,7 +31,12 @@ var handlers = {
     });
   },
   setStartRoundButton: function() {
-    $('.game-timer').on('click', game.startNewRound);
+    $('.new-round-group').on('click', game.startNewRound);
+  },
+  setBreakButtons: function() {
+    $('.game-breaks-piece').one('click', game.breakRandomPiece);
+    $('.game-breaks-row').one('click', game.breakRandomRow);
+    $('.game-breaks-board').one('click', game.breakBoard);
   },
   // set all event handlers
   setStartingHandlers: function() {
@@ -35,6 +46,6 @@ var handlers = {
   },
   // set all game related handlers
   setGameHandlers: function() {
-    handlers.setStartRoundButton();
+    handlers.setBreakButtons();
   }
 };

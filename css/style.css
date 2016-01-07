@@ -6,6 +6,9 @@ body {
   background-color: #FFF;
   font-family: "Orbitron";
 }
+.container :hover {
+  cursor: pointer;
+}
 
 .nav-bar {
   position: relative;
@@ -42,6 +45,16 @@ body {
 .bar-fill-path {
   stroke: none;
   fill: #322812;
+}
+.mask-fill-path {
+  stroke: none;
+  fill: #DADDDD;
+}
+.grey-svg-text {
+  fill: #DADDDD;
+}
+.orange-svg-text {
+  fill: #F4B350;
 }
 .ion-person {
   margin-left: 10px;
@@ -85,9 +98,10 @@ body {
 .game-area {
   position: relative;
 }
-.game-new-round {
-  background-color: red;
-  opacity: 0.2;
+.game-area-new-round {
+  stroke: #555;
+  stroke-width: 4;
+  stroke-linecap: round;
 }
 .game-board {
   position: relative;

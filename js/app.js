@@ -209,6 +209,58 @@ var game = {
     game.data.selectedPiece = null;
     game.data.targetedPiece = null;
   },
+  breakRandomPiece: function() {
+    // mark random board piece to break
+    var randX = Math.floor(Math.random() * game.data.boardSize);
+    var randY = Math.floor(Math.random() * game.data.boardSize);
+    // grey out piece button
+    $('.game-breaks-piece').css('opacity', '0.2');
+    var matchList = [[randX,randY]];
+    game.replaceMatches(matchList);
+  },
+  breakRandomRow: function() {
+    // mark random row to break
+    var randY = Math.floor(Math.random() * game.data.boardSize);
+    // grey out row button
+    $('.game-breaks-row').css('opacity', '0.2');
+    var matchList = [];
+    for (var x = 0; x < game.data.boardSize; x++) {
+      matchList.push([x,randY]);
+    }
+    game.replaceMatches(matchList);
+  },
+  breakBoard: function() {
+    // grey out board button
+    $('.game-breaks-board').css('opacity', '0.2');
+    var matchList = [];
+    for (var x = 0; x < game.data.boardSize; x++) {
+      for (var y = 0; y < game.data.boardSize; y++) {
+        matchList.push([x,y]);
+      }
+    }
+    game.replaceMatches(matchList);
+  },
+  replaceMatches: function(forcedMatches) {
+    var newMatchPositions = []
+    if (forcedMatches) {
+      newMatchPositions = forcedMatches;
+    } else {
+      newMatchPositions = game.collectMatches();
+    }
+    while (newMatchPositions.length > 0) {
+      _.each(newMatchPositions, function(matchPosition) {
+        game.replacePiece(game.data.gamePieces, matchPosition);
+        // whenever a piece is removed increment the score
+        game.data.score += (1 * (1 + game.data.multiplier));
+      });
+      // increment based on number of matches found (matching more than 2 in a cycle bumps)
+      if (newMatchPositions.length > 2) {
+        game.data.multiplier += 0.06 * (newMatchPositions.length - 2);
+        if (game.data.multiplier > 1) { game.data.multiplier = 1 };
+      }
+      newMatchPositions = game.collectMatches();
+    }
+  },
   // function containing game logic to be run on cycle
   updateGameState: function() {
     // initial checks and handling of run status
@@ -219,7 +271,6 @@ var game = {
       var newTS = Date.now();
       var oldTS = game.data.startTime;
       var elapsed = newTS - oldTS;
-      console.log('elapsed time: ', elapsed);
       game.data.startTime = newTS;
       game.data.time -= elapsed/1000;
       if (game.data.time < 0) {
@@ -239,21 +290,7 @@ var game = {
                game.data.targetedPiece) {
       // player is moving a piece and matching should be disabled
       game.attemptMovePiece();
-      var newMatchPositions = game.collectMatches();
-      while (newMatchPositions.length > 0) {
-        console.log('New matches found.');
-        _.each(newMatchPositions, function(matchPosition) {
-          game.replacePiece(game.data.gamePieces, matchPosition);
-          // whenever a piece is removed increment the score
-          game.data.score += (1 * (1 + game.data.multiplier));
-        });
-        // increment based on number of matches found (matching more than 2 in a cycle bumps)
-        if (newMatchPositions.length > 2) {
-          game.data.multiplier += 0.03 * (newMatchPositions.length - 2);
-          if (game.data.multiplier > 1) { game.data.multiplier = 1 };
-        }
-        newMatchPositions = game.collectMatches();
-      }
+      game.replaceMatches();
     }
     // decrement the multiplier based on time
     if (game.data.multiplier > 0) {
@@ -263,10 +300,13 @@ var game = {
   startNewRound: function() {
     // set initial conditions
     game.data.startTime = Date.now();
+    game.data.gamePieces = game.generateBoard();
     game.data.time = 30;
     game.data.score = 0;
     game.data.runStatus = 1;
+    display.drawGameBreaks();
     display.setGameEnabled();
+    handlers.setGameHandlers();
   },
   // group functions calls to be made on page initiation
   init: function() {

@@ -95,9 +95,18 @@ var display = {
     gameTimerSVG.setAttribute('width', String(cWidth));
     gameTimerSVG.setAttribute('height', String(cHeight));
     var gameTimerText = helpers.eltNS('text', 'game-timer-text');
-    gameTimerText.textContent = 'time: ' + String((game.data.time).toFixed(2)) + 's';
-    gameTimerText.setAttribute('x', '0');
-    gameTimerText.setAttribute('y', String(cHeight * 0.8));
+    var gameTimerLabel = helpers.eltNS('tspan', 'game-timer-label grey-svg-text');
+    var gameTimerValue = helpers.eltNS('tspan', 'game-timer-value orange-svg-text');
+    gameTimerLabel.textContent = 'time: ';
+    gameTimerValue.textContent = String((game.data.time).toFixed(2)) + 's';
+    gameTimerLabel.style.fontSize = String(cHeight * 0.2) + 'px';
+    gameTimerLabel.setAttribute('x', '0');
+    gameTimerLabel.setAttribute('y', String(cHeight * 0.48));
+    gameTimerValue.style.fontSize = String(cHeight * 0.3) + 'px';
+    gameTimerValue.setAttribute('x', '0');
+    gameTimerValue.setAttribute('y', String(cHeight * 0.8));
+    gameTimerText.appendChild(gameTimerLabel);
+    gameTimerText.appendChild(gameTimerValue);
     gameTimerSVG.appendChild(gameTimerText);
     $('.game-timer').append($(gameTimerSVG));
   },
@@ -110,9 +119,18 @@ var display = {
     gameScoreSVG.setAttribute('width', String(cWidth));
     gameScoreSVG.setAttribute('height', String(cHeight));
     var gameScoreText = helpers.eltNS('text', 'game-score-text');
-    gameScoreText.textContent = 'score: ' + String((game.data.score * 10).toFixed(0));
-    gameScoreText.setAttribute('x', '0');
-    gameScoreText.setAttribute('y', String(cHeight * 0.8));
+    var gameScoreLabel = helpers.eltNS('tspan', 'game-score-label grey-svg-text');
+    var gameScoreValue = helpers.eltNS('tspan', 'game-score-value orange-svg-text');
+    gameScoreLabel.textContent = 'score';
+    gameScoreValue.textContent = String((game.data.score * 100).toFixed(0));
+    gameScoreLabel.style.fontSize = String(cHeight * 0.3);
+    gameScoreLabel.setAttribute('x', '0');
+    gameScoreLabel.setAttribute('y', String(cHeight * 0.9));
+    gameScoreValue.style.fontSize = String(cHeight * 0.5);
+    gameScoreValue.setAttribute('x', '0');
+    gameScoreValue.setAttribute('y', String(cHeight * 0.58));
+    gameScoreText.appendChild(gameScoreLabel);
+    gameScoreText.appendChild(gameScoreValue);
     gameScoreSVG.appendChild(gameScoreText);
     $('.game-score').append($(gameScoreSVG));
   },
@@ -193,22 +211,30 @@ var display = {
     gameMultArea.setAttribute('width', String(cWidth));
     gameMultArea.setAttribute('height', String(cHeight));
     var gameMultBar = helpers.eltNS('path', 'game-multiplier-bar bar-fill-path');
-    var barPathData = 'M0 ' + String(cHeight - barHeight) + ' L 0 ' + String(cHeight) +
+    var barPathData = 'M1 ' + String(cHeight - barHeight) + ' L 1 ' + String(cHeight) +
       ' L ' + String(cWidth) + ' ' + String(cHeight) + ' L ' + String(cWidth) +
       ' ' + String(cHeight - barHeight);
     gameMultBar.setAttribute('d', barPathData);
     var gameMultBarLevel = helpers.eltNS('path', 'game-multiplier-bar primary-fill-path');
-    var barLevelPathData = 'M0 ' + String(cHeight - barLevel) + ' L 0 ' + String(cHeight) +
+    var barLevelPathData = 'M1 ' + String(cHeight - barLevel) + ' L 1 ' + String(cHeight) +
       ' L ' + String(cWidth) + ' ' + String(cHeight) + ' L ' + String(cWidth) +
       ' ' + String(cHeight - barLevel);
     gameMultBarLevel.setAttribute('d', barLevelPathData);
     var gameMultText = helpers.eltNS('text', 'game-multiplier-text');
-    gameMultText.textContent = String((game.data.multiplier * 100).toFixed(2)) + '%';
+    gameMultText.textContent = String((game.data.multiplier * 100).toFixed(0)) + '%';
+    gameMultText.style.fontSize = String(Math.floor(cHeight * 0.08)) + 'px';
+    var gameMultBarMask = helpers.eltNS('path', 'game-multiplier-mask mask-fill-path');
+    var maskPathData = 'M0 ' + String(cHeight - barHeight - 1) + ' L 0 ' + String(cHeight) +
+      ' L 1 ' + String(cHeight) + ' L ' + String(cWidth * 0.25) + ' ' + String(cHeight - barHeight * 0.88) +
+       ' L ' + String(cWidth) + ' ' + String(cHeight - barHeight) + ' L ' + String(cWidth) + ' ' +
+       String(cHeight - barHeight - 1);
+    gameMultBarMask.setAttribute('d', maskPathData);
     gameMultText.setAttribute('x', String(cWidth * 0.2));
     gameMultText.setAttribute('y', String(cHeight * 0.2));
     gameMultArea.appendChild(gameMultBar);
     gameMultArea.appendChild(gameMultBarLevel);
     gameMultArea.appendChild(gameMultText);
+    gameMultArea.appendChild(gameMultBarMask);
     $('.game-multiplier').append($(gameMultArea));
   },
   drawGameBreaks: function() {
@@ -220,6 +246,7 @@ var display = {
     var gameBreaksSVG = helpers.eltNS('svg', 'game-breaks-svg');
     gameBreaksSVG.setAttribute('width', String(cWidth));
     gameBreaksSVG.setAttribute('height', String(cHeight));
+    gameBreaksSVG.style.fontSize = String(cHeight * 0.7) + 'px';
     var gameBreaksBkg = helpers.eltNS('path', 'game-breaks-bkg bkg-fill-path');
     var bkgPathData = 'M0 ' + String(cCorner) + ' L 0 ' + String(cHeight - cCorner) +
       ' C 0 ' + String(cHeight) + ', 0 ' + String(cHeight) + ', ' +
@@ -228,7 +255,8 @@ var display = {
       String(cHeight * 0.5) + ' L ' + String(cWidth * 0.98) + ' 0 L ' +
       String(cCorner) + ' 0 C 0 0, 0 0, 0 ' + String(cCorner);
     gameBreaksBkg.setAttribute('d', bkgPathData);
-    var gameBreaksBoard = helpers.eltNS('path', 'game-breaks-board primary-fill-path');
+    var breakBoardGroup = helpers.eltNS('g', 'game-breaks-board');
+    var gameBreaksBoard = helpers.eltNS('path', 'primary-fill-path board-path');
     var boardBtnPathData = 'M' + String(cWidth * 0.76 - 4) + ' 2 L ' +
       String(cWidth * 0.78 - 4) + ' ' + String(cHeight * 0.5) + ' L ' +
       String(cWidth * 0.76 - 4) + ' ' + String(cHeight - 2) + ' L ' +
@@ -236,7 +264,8 @@ var display = {
       String(cWidth - 4) + ' ' + String(cHeight * 0.5) + ' L ' +
       String(cWidth * 0.98 - 4) + ' 2 L ' + String(cWidth * 0.76 - 4) + ' 2';
     gameBreaksBoard.setAttribute('d', boardBtnPathData);
-    var gameBreaksRow = helpers.eltNS('path', 'game-breaks-row primary-fill-path');
+    var breakRowGroup = helpers.eltNS('g', 'game-breaks-row');
+    var gameBreaksRow = helpers.eltNS('path', 'primary-fill-path row-path');
     var rowBtnPathData = 'M' + String(cWidth * 0.52 - 8) + ' 2 L ' +
       String(cWidth * 0.54 - 8) + ' ' + String(cHeight * 0.5) + ' L ' +
       String(cWidth * 0.52 - 8) + ' ' + String(cHeight - 2) + ' L ' +
@@ -244,7 +273,8 @@ var display = {
       String(cWidth * 0.78 - 8) + ' ' + String(cHeight * 0.5) + ' L ' +
       String(cWidth * 0.76 - 8) + ' 2 L ' + String(cWidth * 0.52 - 8) + ' 2';
     gameBreaksRow.setAttribute('d', rowBtnPathData);
-    var gameBreaksPiece = helpers.eltNS('path', 'game-breaks-piece primary-fill-path');
+    var breakPieceGroup = helpers.eltNS('g', 'game-breaks-piece');
+    var gameBreaksPiece = helpers.eltNS('path', 'primary-fill-path piece-path');
     var pieceBtnPathData = 'M' + String(cWidth * 0.28 - 12) + ' 2 L ' +
       String(cWidth * 0.30 - 12) + ' ' + String(cHeight * 0.5) + ' L ' +
       String(cWidth * 0.28 - 12) + ' ' + String(cHeight - 2) + ' L ' +
@@ -254,11 +284,11 @@ var display = {
     gameBreaksPiece.setAttribute('d', pieceBtnPathData);
     var breakBreakText = helpers.eltNS('text', 'game-breaks-text help-text');
     breakBreakText.textContent = 'break';
-    breakBreakText.setAttribute('x', String(cWidth * 0.1));
+    breakBreakText.setAttribute('x', String(cWidth * 0.07));
     breakBreakText.setAttribute('y', String(cHeight * 0.7));
     var breakPieceText = helpers.eltNS('text', 'game-breaks-text btn-text');
     breakPieceText.textContent = 'piece';
-    breakPieceText.setAttribute('x', String(cWidth * 0.34));
+    breakPieceText.setAttribute('x', String(cWidth * 0.3));
     breakPieceText.setAttribute('y', String(cHeight * 0.7));
     var breakRowText = helpers.eltNS('text', 'game-breaks-text btn-text');
     breakRowText.textContent = 'row';
@@ -268,14 +298,17 @@ var display = {
     breakBoardText.textContent = 'board';
     breakBoardText.setAttribute('x', String(cWidth * 0.80));
     breakBoardText.setAttribute('y', String(cHeight * 0.7));
+    breakBoardGroup.appendChild(gameBreaksBoard);
+    breakBoardGroup.appendChild(breakBoardText);
+    breakRowGroup.appendChild(gameBreaksRow);
+    breakRowGroup.appendChild(breakRowText);
+    breakPieceGroup.appendChild(gameBreaksPiece);
+    breakPieceGroup.appendChild(breakPieceText);
     gameBreaksSVG.appendChild(gameBreaksBkg);
-    gameBreaksSVG.appendChild(gameBreaksPiece);
-    gameBreaksSVG.appendChild(gameBreaksRow);
-    gameBreaksSVG.appendChild(gameBreaksBoard);
+    gameBreaksSVG.appendChild(breakPieceGroup);
+    gameBreaksSVG.appendChild(breakRowGroup);
+    gameBreaksSVG.appendChild(breakBoardGroup);
     gameBreaksSVG.appendChild(breakBreakText);
-    gameBreaksSVG.appendChild(breakPieceText);
-    gameBreaksSVG.appendChild(breakRowText);
-    gameBreaksSVG.appendChild(breakBoardText);
     $('.game-breaks').append($(gameBreaksSVG));
   },
   redrawGameState: function() {
@@ -318,8 +351,7 @@ var display = {
     // dynamically produce nav bar elements for proper display on resizing
     var navBarHome = helpers.elt('div', 'two columns u-pull-left site-icon');
     navBarHome.style.paddingTop = String(Math.floor(vportCurve * 0.2)) + 'px';
-    var navBarHomeIcon = helpers.elt('i', 'icon ion-bonfire');
-    navBarHome.appendChild(navBarHomeIcon);
+    navBarHome.textContent = 'H';
     var navBarProfile = helpers.elt('div', 'four columns u-pull-right player-detail');
     navBarProfile.style.paddingTop = String(Math.floor(vportCurve * 0.2)) + 'px';
     var navBarProfileName = helpers.elt('div', 'profile-name');
@@ -331,6 +363,8 @@ var display = {
     navBarProfile.appendChild(navBarProfileIcon);
     var navBarNavicon = helpers.elt('div', 'two columns u-pull-right nav-icon');
     var navBarNaviconIcon = helpers.elt('i', 'icon ion-navicon-round');
+    navBarNavicon.style.fontSize = String(Math.floor(vportCurve * 1.1)) + 'px';
+    navBarNavicon.style.paddingTop = String(Math.floor(vportCurve * 0.08)) + 'px';
     navBarNavicon.appendChild(navBarNaviconIcon);
     display.groups.$navBar.append($(navBarHome));
     display.groups.$navBar.append($(navBarNavicon));
@@ -382,21 +416,23 @@ var display = {
       String(gameBox * 0.7) + ' 12 L ' + String(gameBox * 0.65) + ' ' + String(gameBox * 0.16) +
       ' L 12 ' + String(gameBox * 0.2);
     gameAreaFill.setAttribute('d', fillPathData);
+    var newRoundGroup = helpers.eltNS('g', 'new-round-group');
     var gameAreaNewRound = helpers.eltNS('path', 'game-area-new-round');
-    var newRoundPathData = 'M' + String(gameBox * 0.75) + ' 20 L ' + String(gameBox - gCorner - 8) +
-      ' 20 C ' + String(gameBox - gCorner - 8) + ' ' + String(gameBox * 0.14) + ', ' +
-      String(gameBox - gCorner - 8) + ' ' + String(gameBox * 0.14) + ', ' +
-      String(gameBox * 0.7) + ' ' + String(gameBox * 0.14) + ' L ' + String(gameBox * 0.75) + ' 20';
+    var newRoundPathData = 'M' + String(gameBox * 0.72) + ' 20 L ' + String(gameBox - gCorner - 8) +
+      ' 20 C ' + String(gameBox - gCorner * 1.2) + ' ' + String(gameBox * 0.1) + ', ' +
+      String(gameBox - gCorner * 1.4) + ' ' + String(gameBox * 0.13) + ', ' +
+      String(gameBox * 0.68) + ' ' + String(gameBox * 0.14) + ' L ' + String(gameBox * 0.72) + ' 20';
     gameAreaNewRound.setAttribute('d', newRoundPathData);
     var newRoundText = helpers.eltNS('text', 'new-round-text');
-    newRoundText.textContent = 'new\nround';
-    newRoundText.style.whiteSpace = 'normal';
-    newRoundText.setAttribute('x', String(Math.floor(gameBox * 0.76)));
+    newRoundText.textContent = 'GO';
+    newRoundText.style.fontSize = String(Math.floor(gameBox * 0.05)) + 'px';
+    newRoundText.setAttribute('x', String(Math.floor(gameBox * 0.74)));
     newRoundText.setAttribute('y', String(Math.floor(gameBox * 0.10)));
+    newRoundGroup.appendChild(gameAreaNewRound);
+    newRoundGroup.appendChild(newRoundText);
     gameAreaSVG.appendChild(gameAreaBorder);
     gameAreaSVG.appendChild(gameAreaFill);
-    gameAreaSVG.appendChild(gameAreaNewRound);
-    gameAreaSVG.appendChild(newRoundText);
+    gameAreaSVG.appendChild(newRoundGroup);
     display.groups.$gameArea.append($(gameAreaSVG));
     // clear current game elements
     $('.game-timer').remove();
@@ -424,7 +460,7 @@ var display = {
     gameBoard.style.top = String(Math.floor(gameBox * 0.25)) + 'px';
     gameBoard.style.left = String(Math.floor(gameBox * 0.05 + gameAreaOffset)) + 'px';
     gameMultiplier.style.width = String(Math.floor(gameBox * 0.2)) + 'px';
-    gameMultiplier.style.height = String(Math.floor(gameBox * 0.75)) + 'px';
+    gameMultiplier.style.height = String(Math.floor(gameBox * 0.7)) + 'px';
     gameMultiplier.style.top = String(Math.floor(gameBox * 0.15)) + 'px';
     gameMultiplier.style.left = String(Math.floor(gameBox * 0.75 + gameAreaOffset)) + 'px';
     gameBreaks.style.width = String(Math.floor(gameBox * 0.5)) + 'px';
@@ -439,7 +475,7 @@ var display = {
     display.groups.$gameArea.append($(gameMultiplier));
     // set newly created DOM handles
     display.setHandles();
-    handlers.setGameHandlers();
+    handlers.setStartRoundButton();
   },
   setGameEnabled: function() {
     // set visual properties relating to game running
@@ -447,7 +483,7 @@ var display = {
     $('.game-score').css('opacity', '1');
     $('.game-board').css('opacity', '1');
     $('.game-multiplier').css('opacity', '1');
-    $('.primary-fill-path .').css('fill', '#F4B350');
+    $('.primary-fill-path').css('fill', '#F4B350');
     $('.game-area-new-round').css('fill', '#9A9D9D');
     $('.game-breaks-text').css('opacity', '1');
   },
