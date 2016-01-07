@@ -77,7 +77,6 @@ var handlers = {
       }
     });
     if (!validTarget || !game.data.selectedPiece) {
-      console.log('Not a valid move input.');
       // if selection made and no valid location targeted or mouseup event triggered from action
       // other than selecting a piece clear both selection and target data.
       game.clearSelections();
