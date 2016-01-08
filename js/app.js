@@ -40,6 +40,8 @@ var game = {
       _.each(_.range(game.data.boardSize), function(y) {
         var newPiece = {
           category: Math.floor(Math.random() * 6),
+          position: [x,y],
+          marker: [x,y],
         };
         newCol.push(newPiece);
       });
@@ -54,6 +56,42 @@ var game = {
       _.each(col, function(piece, y) {
         pieceOperation(pieces, x, y);
       });
+    });
+  },
+  updatePiecePositions: function() {
+    game.allPieces(game.data.gamePieces, function(pieces, x, y) {
+      pieces[x][y].position = [x,y];
+    });
+  },
+  updateMarkerPositions: function(stepDistance) {
+    game.allPieces(game.data.gamePieces, function(pieces, x, y) {
+      var currPiece = pieces[x][y];
+      var xDist = currPiece.position[0] - currPiece.marker[0];
+      var yDist = currPiece.position[1] - currPiece.marker[1];
+      if (xDist || yDist) {
+        debugger
+      }
+      // if discrepancy between marker and tile x positions step closer together
+      if (xDist) {
+        if (Math.abs(xDist) < stepDistance) {
+          // move marker back to tile position
+          currPiece.marker[0] = currPiece.position[0];
+        } else if (xDist < 0) {
+          currPiece.marker[0] -= stepDistance;
+        } else {
+          currPiece.marker[0] += stepDistance;
+        }
+      }
+      if (yDist) {
+        if (Math.abs(yDist) < stepDistance) {
+          // move marker back to tile position
+          currPiece.marker[1] = currPiece.position[1];
+        } else if (yDist < 0) {
+          currPiece.marker[1] -= stepDistance;
+        } else {
+          currPiece.marker[1] += stepDistance;
+        }
+      }
     });
   },
   // piece operation checking match for given position
@@ -177,6 +215,8 @@ var game = {
     var removedPiece = pieces[oldPos[0]].splice(oldPos[1], 1);
     var newPiece = {
       category: Math.floor(Math.random() * 6),
+      position: [oldPos[0],0],
+      marker: [oldPos[0],0],
     };
     pieces[oldPos[0]].unshift(newPiece);
   },
@@ -213,6 +253,8 @@ var game = {
       pieces[currentCol].splice(oldPos[1], 0, displacedPiece);
       pieces[targetCol].splice(oldPos[1], 0, movingPiece);
     }
+    // after pieces have been moved update their position properties
+    game.updatePiecePositions();
   },
   clearSelections: function() {
     game.data.selectedPiece = null;
@@ -303,6 +345,8 @@ var game = {
     if (game.data.multiplier > 0) {
       game.data.multiplier -= Math.min(0.001, game.data.multiplier);
     }
+    // update piece marker positions (where arg is step distance, 1 = tilewidth)
+    game.updateMarkerPositions(0.2);
   },
   startNewRound: function() {
     // set initial conditions

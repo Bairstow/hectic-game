@@ -5,7 +5,6 @@ var display = {
   pieceColors: ['#0F8', '#F08', '#08F', '#F80', '#80F', '#8F0'],
   highlightColor: '#DDF',
   gameTiles: null,
-  gamePieces: null,
   selectedPiece: null,
   targetedPosition: null,
   groups: {
@@ -169,31 +168,33 @@ var display = {
     var boardWidth = display.elts.$gameBoard.outerWidth();
     //display.elts.$gameBoard.css('padding', String(boardWidth * 0.048) + 'px');
     var tileWidth = Math.floor((boardWidth - 2) / game.data.boardSize);
-    // setup a mirrored set of arrays that will hold the tile DOM elements associated with each piece
-    var newPieces = [];
-    _.each(_.range(game.data.boardSize), function(x) {
-      var newCol = [];
-      _.each(_.range(game.data.boardSize), function(y) {
-        var newPiece = helpers.elt('div','game-piece');
-        // set tile specific style properties
+    // iterate over the game piece data and generate a new marker piece render
+    // for each position.
+    var gamePieces = game.data.gamePieces;
+
+    _.each(gamePieces, function(gameRow, x) {
+      _.each(gameRow, function(gamePiece, y) {
+        var newMarker = helpers.elt('div', 'game-piece');
+        // current piece marker position from game data
+        var currPos = gamePiece.position;
+        var currMarker = gamePiece.marker;
+        var currCategory = gamePiece.category;
+        // set piece specific style properties
         if (game.data.selectedPiece &&
-            game.data.selectedPiece[0] === x &&
-            game.data.selectedPiece[1] === y) {
-          newPiece.style.opacity = 0.6;
+            game.data.selectedPiece[0] === currPos[0] &&
+            game.data.selectedPiece[1] === currPos[1]) {
+          newMarker.style.opacity = 0.6;
         } else {
-          newPiece.style.opacity = 1;
+          newMarker.style.opacity = 1;
         }
-        newPiece.style.backgroundColor = display.pieceColors[game.data.gamePieces[x][y].category];
-        newPiece.setAttribute('data-x', x);
-        newPiece.setAttribute('data-y', y);
-        newPiece.style.top = String(y * tileWidth) + 'px';
-        newPiece.style.left = String(x * tileWidth) + 'px';
-        display.elts.$gameBoard.append($(newPiece));
-        newCol.push(newPiece);
+        newMarker.style.backgroundColor = display.pieceColors[currCategory];
+        newMarker.setAttribute('data-x', currPos[0]);
+        newMarker.setAttribute('data-y', currPos[1]);
+        newMarker.style.top = String(currMarker[0] * tileWidth) + 'px';
+        newMarker.style.left = String(currMarker[1] * tileWidth) + 'px';
+        display.elts.$gameBoard.append($(newMarker));
       });
-      newPieces.push(newCol);
     });
-    display.gamePieces = newPieces;
     $('.game-piece').css('width', String(tileWidth * 0.7) + 'px');
     $('.game-piece').css('height', String(tileWidth * 0.7) + 'px');
     $('.game-piece').css('margin', String(tileWidth * 0.15) + 'px');
