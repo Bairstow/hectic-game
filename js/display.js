@@ -179,10 +179,11 @@ var display = {
         if (game.data.selectedPiece &&
             game.data.selectedPiece[0] === x &&
             game.data.selectedPiece[1] === y) {
-          newPiece.style.backgroundColor = display.highlightColor;
+          newPiece.style.opacity = 0.6;
         } else {
-          newPiece.style.backgroundColor = display.pieceColors[game.data.gamePieces[x][y].category];
+          newPiece.style.opacity = 1;
         }
+        newPiece.style.backgroundColor = display.pieceColors[game.data.gamePieces[x][y].category];
         newPiece.setAttribute('data-x', x);
         newPiece.setAttribute('data-y', y);
         newPiece.style.top = String(y * tileWidth) + 'px';

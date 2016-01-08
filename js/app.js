@@ -25,6 +25,7 @@ var game = {
     boardSize: 8,
     selectedPiece: null,
     targetedPiece: null,
+    hoverPiece: null,
     gamePieces: null,
     startTime: null,
     time: 0,
@@ -117,11 +118,17 @@ var game = {
   },
   // find selected piece from gamePieces
   setSelectedPiece: function(pX, pY) {
+    // redundant assignment functions that used to contain more logic.
     game.data.selectedPiece = [pX, pY];
+    game.data.originalPos = [pX, pY];
   },
   // find selected piece from gamePieces
   setTargetedPiece: function(pX, pY) {
     game.data.targetedPiece = [pX, pY];
+  },
+  // find selected piece from gamePieces
+  setHoverPiece: function(pX, pY) {
+    game.data.hoverPiece = [pX, pY];
   },
   // run selection logic to see if piece move is valid and if so exchange piece positions
   attemptMovePiece: function() {
@@ -142,6 +149,16 @@ var game = {
       }
     }
     game.clearSelections();
+  },
+  // show temporary position replacement checking cardinal movement requirements but
+  // not checking matching criteria.
+  temporaryMove: function(pieceOrigin, pieceDestination) {
+    // check move validity. i.e. selection and target must share either row or column
+    if (pieceOrigin[0] === pieceDestination[0] ||
+        pieceOrigin[1] === pieceDestination[1]) {
+      // move piece first to check the match then if it fails move it back.
+      game.movePiece(game.data.gamePieces, pieceOrigin, pieceDestination);
+    }
   },
   // cycle through game pieces and build positional list of pieces that are currently matched
   collectMatches: function() {
@@ -200,6 +217,8 @@ var game = {
   clearSelections: function() {
     game.data.selectedPiece = null;
     game.data.targetedPiece = null;
+    game.data.originalPos = null;
+    game.data.hoverPiece = null;
   },
   breakRandomPiece: function() {
     // mark random board piece to break
@@ -272,14 +291,11 @@ var game = {
         game.data.runStatus = 0;
       }
     }
-    // filling takes priority over all other game states no piece movement during filling
-    if (game.data.gameStatus === 'filling') {
-      // while new pieces are being generated loop
-      // todo disable player selection
-    } else if (game.data.gameStatus === 'waiting' &&
-               game.data.selectedPiece &&
-               game.data.targetedPiece) {
-      // player is moving a piece and matching should be disabled
+    if (game.data.selectedPiece && game.data.targetedPiece) {
+      // player has input an attempted move
+      // return selected piece to its original positon and update
+      game.temporaryMove(game.data.selectedPiece, game.data.originalPos);
+      game.data.selectedPiece = game.data.originalPos;
       game.attemptMovePiece();
       game.replaceMatches();
     }
