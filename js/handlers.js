@@ -49,17 +49,23 @@ var handlers = {
       var breakPieceButton = document.getElementsByClassName('game-breaks-piece')[0];
       var breakRowButton = document.getElementsByClassName('game-breaks-row')[0];
       var breakBoardButton = document.getElementsByClassName('game-breaks-board')[0];
-      if (breakPieceButton.contains(event.target)) {
-        game.breakRandomPiece();
-        breakPieceButton.style.opacity = 0.2;
+      if (breakPieceButton !== []) {
+        if (breakPieceButton.contains(event.target)) {
+          game.breakRandomPiece();
+          breakPieceButton.style.opacity = 0.2;
+        }
       }
-      if (breakRowButton.contains(event.target)) {
-        game.breakRandomRow();
-        breakRowButton.style.opacity = 0.2;
+      if (breakRowButton !== []) {
+        if (breakRowButton.contains(event.target)) {
+          game.breakRandomRow();
+          breakRowButton.style.opacity = 0.2;
+        }
       }
-      if (breakBoardButton.contains(event.target)) {
-        game.breakBoard();
-        breakBoardButton.style.opacity = 0.2;
+      if (breakBoardButton !== []) {
+        if (breakBoardButton.contains(event.target)) {
+          game.breakBoard();
+          breakBoardButton.style.opacity = 0.2;
+        }
       }
       // check all game pieces and tiles for targeting
       var gameTiles = document.getElementsByClassName('game-tile');
@@ -67,7 +73,6 @@ var handlers = {
       var validTarget = false;
       _.each(gameTiles, function(tile) {
         if (event.target === tile) {
-          // debugger
           var targetX = Number(event.target.getAttribute('data-x'));
           var targetY = Number(event.target.getAttribute('data-y'));
           game.setTargetedPiece(targetX, targetY);
@@ -76,16 +81,20 @@ var handlers = {
       });
       _.each(gamePieces, function(piece) {
         if (event.target === piece) {
-          // debugger
           var targetX = Number(event.target.getAttribute('data-x'));
           var targetY = Number(event.target.getAttribute('data-y'));
           game.setTargetedPiece(targetX, targetY);
           validTarget = true;
         }
       });
-      if (!validTarget || !game.data.selectedPiece) {
+      if (!validTarget) {
         // if selection made and no valid location targeted or mouseup event triggered from action
         // other than selecting a piece clear both selection and target data.
+        // return selected piece to its original positon and update
+        if (game.data.selectedPiece) {
+          game.temporaryMove(game.data.selectedPiece, game.data.originalPos);
+          game.data.selectedPiece = game.data.originalPos;
+        }
         game.clearSelections();
       }
     }
@@ -101,13 +110,6 @@ var handlers = {
           var hoverX = Number(event.target.getAttribute('data-x'));
           var hoverY = Number(event.target.getAttribute('data-y'));
           var hoverPos = [hoverX, hoverY];
-          /*// reset piece position on each new event
-          game.temporaryMove(game.data.selectedPiece, game.data.originalPos);
-          // event triggers multiple times on hover so call only once per new hover position
-          if (game.data.hoverPiece === null && game.data.hoverPiece !== [hoverX, hoverY]) {
-            game.setHoverPiece(hoverX, hoverY);
-            game.temporaryMove(game.data.selectedPiece, game.data.hoverPiece);
-          }*/
           // update and move for each hover encountered
           game.temporaryMove(game.data.selectedPiece, hoverPos);
           game.data.selectedPiece = hoverPos;
@@ -118,38 +120,10 @@ var handlers = {
           var hoverX = Number(event.target.getAttribute('data-x'));
           var hoverY = Number(event.target.getAttribute('data-y'));
           var hoverPos = [hoverX, hoverY];
-          /*// event triggers multiple times on hover so call only once per new hover position
-          if (game.data.hoverPiece === null && game.data.hoverPiece !== [hoverX, hoverY]) {
-            game.setHoverPiece(hoverX, hoverY);
-            game.temporaryMove(game.data.selectedPiece, game.data.hoverPiece);
-          }*/
           game.temporaryMove(game.data.selectedPiece, hoverPos);
           game.data.selectedPiece = hoverPos;
         }
       });
     }
-  },
-  /*mouseOutHandling: function() {
-    // check all game pieces and tiles for selection
-    var gameTiles = document.getElementsByClassName('game-tile');
-    var gamePieces = document.getElementsByClassName('game-piece');
-    _.each(gameTiles, function(tile) {
-      if (event.target === tile && game.data.selectedPiece) {
-        if (game.data.hoverPiece !== null) {
-          // clear current hover target and replace piece to original position
-          game.temporaryMove(game.data.hoverPiece, game.data.selectedPiece);
-          game.data.hoverPiece = null;
-        }
-      }
-    });
-    _.each(gamePieces, function(piece) {
-      if (event.target === piece && game.data.selectedPiece) {
-        if (game.data.hoverPiece !== null) {
-          // clear current hover target
-          game.temporaryMove(game.data.hoverPiece, game.data.selectedPiece);
-          game.data.hoverPiece = null;
-        }
-      }
-    });
-  }*/
+  }
 };
