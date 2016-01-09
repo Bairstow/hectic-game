@@ -23,9 +23,9 @@ var game = {
     gameStatus: 'waiting',
     runStatus: 0,
     boardSize: 8,
-    selectedPiece: null,
-    targetedPiece: null,
-    hoverPiece: null,
+    currentPos: null,
+    targetedPos: null,
+    hoverPos: null,
     gamePieces: null,
     startTime: null,
     time: 0,
@@ -40,8 +40,7 @@ var game = {
       _.each(_.range(game.data.boardSize), function(y) {
         var newPiece = {
           category: Math.floor(Math.random() * 6),
-          position: [x,y],
-          marker: [x,y],
+          marker: [x,y - 1],
         };
         newCol.push(newPiece);
       });
@@ -58,16 +57,10 @@ var game = {
       });
     });
   },
-  updatePiecePositions: function() {
-    game.allPieces(game.data.gamePieces, function(pieces, x, y) {
-      pieces[x][y].position = [x,y];
-    });
-  },
   updateMarkerPositions: function(stepDistance) {
     game.allPieces(game.data.gamePieces, function(pieces, x, y) {
-      var currPiece = pieces[x][y];
-      var xDist = currPiece.position[0] - currPiece.marker[0];
-      var yDist = currPiece.position[1] - currPiece.marker[1];
+      var xDist = x - pieces[x][y].marker[0];
+      var yDist = y - pieces[x][y].marker[1];
       if (xDist || yDist) {
         debugger
       }
@@ -75,21 +68,21 @@ var game = {
       if (xDist) {
         if (Math.abs(xDist) < stepDistance) {
           // move marker back to tile position
-          currPiece.marker[0] = currPiece.position[0];
+          pieces[x][y].marker[0] = x;
         } else if (xDist < 0) {
-          currPiece.marker[0] -= stepDistance;
+          pieces[x][y].marker[0] -= stepDistance;
         } else {
-          currPiece.marker[0] += stepDistance;
+          pieces[x][y].marker[0] += stepDistance;
         }
       }
       if (yDist) {
         if (Math.abs(yDist) < stepDistance) {
           // move marker back to tile position
-          currPiece.marker[1] = currPiece.position[1];
+          pieces[x][y].marker[1] = pieces[x][y].position[1];
         } else if (yDist < 0) {
-          currPiece.marker[1] -= stepDistance;
+          pieces[x][y].marker[1] -= stepDistance;
         } else {
-          currPiece.marker[1] += stepDistance;
+          pieces[x][y].marker[1] += stepDistance;
         }
       }
     });
@@ -100,10 +93,6 @@ var game = {
     // three pieces in a row of the same category constitutes a match.
     var target = pieces[pX][pY];
     var matched = false;
-    if (selectPos) {
-      target = pieces[selectPos[0]][selectPos[1]];
-      console.log('Checking selection at: ', selectPos);
-    }
     // search -y direction (up)
     if (pY >= 2 &&
         pieces[pX][pY-1].category === target.category &&
@@ -148,55 +137,94 @@ var game = {
     }
   },
   // piece operation to randomise initial types so no matches to begin
-  unmatchPieces: function(pieces, pX, pY) {
+  unMatchPieces: function(pieces, pX, pY) {
     while (game.checkMatch(pieces, pX, pY)) {
       pieces[pX][pY].category = Math.floor(Math.random() * 6);
-      pieces[pX][pY].matched = false;
     }
   },
+  movePieceUp: function(pieces, pX, pY) {
+    // piece move up (in the -y direction) and copying displaced piece into origin position
+    if (pY > 0) {
+      var temp = pieces[pX][pY - 1];
+      pieces[pX][pY - 1] = pieces[pX][pY];
+      pieces[pX][pY] = temp;
+    }
+  },
+  movePieceDown: function(pieces, pX, pY) {
+    // piece move down (in the +y direction) and copying displaced piece into origin position
+    if (pY < game.data.boardSize - 1) {
+      var temp = pieces[pX][pY + 1];
+      pieces[pX][pY + 1] = pieces[pX][pY];
+      pieces[pX][pY] = temp;
+    }
+  },
+  movePieceLeft: function(pieces, pX, pY) {
+    // piece move left (in the -x direction) and copying displaced piece into origin position
+    if (pX > 0) {
+      var temp = pieces[pX - 1][pY];
+      pieces[pX - 1][pY] = pieces[pX][pY];
+      pieces[pX][pY] = temp;
+    }
+  },
+  movePieceRight: function(pieces, pX, pY) {
+    // piece move right (in the +x direction) and copying displaced piece into origin position
+    if (pX < game.data.boardSize - 1) {
+      var temp = pieces[pX + 1][pY];
+      pieces[pX + 1][pY] = pieces[pX][pY];
+      pieces[pX][pY] = temp;
+    }
+  },
+  movePiece: function(pieces, oldPos, newPos) {
+    // pieces can only be moved in cardinal directions
+    if (oldPos[0] === newPos[0] ||
+        oldPos[1] === newPos[1]) {
+      var currPos = [oldPos[0],oldPos[1]];
+      while (currPos !== newPos) {
+        // check directional discrepancy and adjust appropriately
+        if (currPos[0] < newPos[0]) {
+          game.movePieceRight(pieces, currPos[0], currPos[1]);
+          currPos[0] += 1;
+        }
+        if (currPos[0] > newPos[0]) {
+          game.movePieceLeft(pieces, currPos[0], currPos[1]);
+          currPos[0] -= 1;
+        }
+        if (currPos[1] < newPos[1]) {
+          game.movePieceDown(pieces, currPos[0], currPos[1]);
+          currPos[1] += 1;
+        }
+        if (currPos[1] > newPos[1]) {
+          game.movePieceUp(pieces, currPos[0], currPos[1]);
+          currPos[1] -= 1;
+        }
+      }
+    } else {
+      return oldPos;
+    }
+    return newPos;
+  },
   // find selected piece from gamePieces
-  setSelectedPiece: function(pX, pY) {
+  setcurrentPos: function(pX, pY) {
     // redundant assignment functions that used to contain more logic.
-    game.data.selectedPiece = [pX, pY];
+    game.data.currentPos = [pX, pY];
     game.data.originalPos = [pX, pY];
   },
   // find selected piece from gamePieces
-  setTargetedPiece: function(pX, pY) {
-    game.data.targetedPiece = [pX, pY];
+  settargetedPos: function(pX, pY) {
+    game.data.targetedPos = [pX, pY];
   },
   // find selected piece from gamePieces
-  setHoverPiece: function(pX, pY) {
-    game.data.hoverPiece = [pX, pY];
+  sethoverPos: function(pX, pY) {
+    game.data.hoverPos = [pX, pY];
   },
-  // run selection logic to see if piece move is valid and if so exchange piece positions
-  attemptMovePiece: function() {
-    // check move validity. i.e. selection and target must share either row or column
-    if (game.data.selectedPiece[0] === game.data.targetedPiece[0] ||
-        game.data.selectedPiece[1] === game.data.targetedPiece[1]) {
-      // move piece first to check the match then if it fails move it back.
-      game.movePiece(game.data.gamePieces, game.data.selectedPiece, game.data.targetedPiece);
-      var matched = false;
-      game.allPieces(game.data.gamePieces, function(pieces, pX, pY) {
-        if (game.checkMatch(pieces, pX, pY)) {
-          matched = true;
-        }
-      });
-      if (!matched) {
-        // new positions do not form a new match move the piece back to original position
-        game.movePiece(game.data.gamePieces, game.data.targetedPiece, game.data.selectedPiece);
-      }
-    }
-    game.clearSelections();
-  },
-  // show temporary position replacement checking cardinal movement requirements but
-  // not checking matching criteria.
-  temporaryMove: function(pieceOrigin, pieceDestination) {
-    // check move validity. i.e. selection and target must share either row or column
-    if (pieceOrigin[0] === pieceDestination[0] ||
-        pieceOrigin[1] === pieceDestination[1]) {
-      // move piece first to check the match then if it fails move it back.
-      game.movePiece(game.data.gamePieces, pieceOrigin, pieceDestination);
-    }
+  // function takes an element and assigns it a new category and moves it to top of its column
+  replacePiece: function(pieces, oldPos) {
+    // set new random category for the piece and move it to the 0 position of it column (i.e the
+    // top of the current column);
+    var topOfColumn = [oldPos[0], 0];
+    pieces[oldPos[0]][oldPos[1]].marker = [oldPos[0], 0];
+    pieces[oldPos[0]][oldPos[1]].category = Math.floor(Math.random() * 6);
+    game.movePiece(pieces, oldPos, topOfColumn);
   },
   // cycle through game pieces and build positional list of pieces that are currently matched
   collectMatches: function() {
@@ -208,59 +236,27 @@ var game = {
     });
     return matchList;
   },
-  // function takes an element that is to be removed from the game board either through
-  // a match or by some other game function and the shifts all pieces above the target
-  // in the column down and generates a new pieces to fill the empty position at the top
-  replacePiece: function(pieces, oldPos) {
-    var removedPiece = pieces[oldPos[0]].splice(oldPos[1], 1);
-    var newPiece = {
-      category: Math.floor(Math.random() * 6),
-      position: [oldPos[0],0],
-      marker: [oldPos[0],0],
-    };
-    pieces[oldPos[0]].unshift(newPiece);
-  },
-  // function to move a piece to new position and update the displaced pieces in
-  // the shared row or column to the new positions
-  movePiece: function(pieces, oldPos, newPos) {
-    // two seperate handling cases depending on whether the move is in a column or in a row
-    // sanity check to catch and return if the selection and target positions are the same
-    if (oldPos[0] === newPos[0] && oldPos[1] === newPos[1]) {
-      return;
-    } else if (oldPos[0] === newPos[0]) {
-      // handle column movement first
-      // pull selected piece from current position.
-      var movingPiece = pieces[oldPos[0]].splice(oldPos[1], 1)[0];
-      // push selected piece back to new position
-      pieces[oldPos[0]].splice(newPos[1], 0, movingPiece);
-    } else {
-      // otherwise movement will be in the horizontal
-      var movingPiece = pieces[oldPos[0]].splice(oldPos[1], 1)[0];
-      var moveDirection = (oldPos[0] < newPos[0] ? 1:-1);
-      var currentCol = oldPos[0];
-      var targetCol = oldPos[0] + moveDirection;
-      // until target column is move the piece in the adjoining column into the vacated position
-      while (targetCol !== newPos[0]) {
-        // move displaced piece
-        var displacedPiece = pieces[targetCol].splice(oldPos[1], 1)[0];
-        pieces[currentCol].splice(oldPos[1], 0, displacedPiece);
-        // update positioning variables
-        targetCol += moveDirection;
-        currentCol += moveDirection;
+  replaceMatches: function(matches) {
+    var newMatchPositions = matches;
+    while (newMatchPositions.length > 0) {
+      _.each(newMatchPositions, function(matchPosition) {
+        game.replacePiece(game.data.gamePieces, matchPosition);
+        // whenever a piece is removed increment the score
+        game.data.score += (1 * (1 + game.data.multiplier));
+      });
+      // increment based on number of matches found (matching more than 2 in a cycle bumps)
+      if (newMatchPositions.length > 2) {
+        game.data.multiplier += 0.06 * (newMatchPositions.length - 2);
+        if (game.data.multiplier > 1) { game.data.multiplier = 1 };
       }
-      // target column reached so insert the selected piece at its new position
-      var displacedPiece = pieces[targetCol].splice(oldPos[1], 1)[0];
-      pieces[currentCol].splice(oldPos[1], 0, displacedPiece);
-      pieces[targetCol].splice(oldPos[1], 0, movingPiece);
+      newMatchPositions = game.collectMatches();
     }
-    // after pieces have been moved update their position properties
-    game.updatePiecePositions();
   },
   clearSelections: function() {
-    game.data.selectedPiece = null;
-    game.data.targetedPiece = null;
+    game.data.currentPos = null;
+    game.data.targetedPos = null;
     game.data.originalPos = null;
-    game.data.hoverPiece = null;
+    game.data.hoverPos = null;
   },
   breakRandomPiece: function() {
     // mark random board piece to break
@@ -293,34 +289,10 @@ var game = {
     }
     game.replaceMatches(matchList);
   },
-  replaceMatches: function(forcedMatches) {
-    var newMatchPositions = []
-    if (forcedMatches) {
-      newMatchPositions = forcedMatches;
-    } else {
-      newMatchPositions = game.collectMatches();
-    }
-    while (newMatchPositions.length > 0) {
-      _.each(newMatchPositions, function(matchPosition) {
-        game.replacePiece(game.data.gamePieces, matchPosition);
-        // whenever a piece is removed increment the score
-        game.data.score += (1 * (1 + game.data.multiplier));
-      });
-      // increment based on number of matches found (matching more than 2 in a cycle bumps)
-      if (newMatchPositions.length > 2) {
-        game.data.multiplier += 0.06 * (newMatchPositions.length - 2);
-        if (game.data.multiplier > 1) { game.data.multiplier = 1 };
-      }
-      newMatchPositions = game.collectMatches();
-    }
-  },
   // function containing game logic to be run on cycle
   updateGameState: function() {
-    // initial checks and handling of run status
-    if (game.data.runStatus === 0) {
-      display.setGameDisabled();
-    } else if (game.data.runStatus === 1) {
-      display.setGameEnabled();
+    // initial checks and handling of run status/end-of-game conditions
+    if (game.data.runStatus === 1) {
       var newTS = Date.now();
       var oldTS = game.data.startTime;
       var elapsed = newTS - oldTS;
@@ -331,15 +303,28 @@ var game = {
         game.data.time = 0;
         game.data.multiplier = 0;
         game.data.runStatus = 0;
+        game.clearSelections();
       }
     }
-    if (game.data.selectedPiece && game.data.targetedPiece) {
-      // player has input an attempted move
-      // return selected piece to its original positon and update
-      game.temporaryMove(game.data.selectedPiece, game.data.originalPos);
-      game.data.selectedPiece = game.data.originalPos;
-      game.attemptMovePiece();
-      game.replaceMatches();
+    // return currentPos to its original position
+    game.movePiece(game.data.gamePieces, game.data.currentPos, game.data.originalPos);
+    // if player has input a move update piece position and then replace matches.
+    if (game.data.originalPos && game.data.targetedPos) {
+      // move piece to target position, check matches, leave if matches found or move back to original
+      // position if there is none.
+      game.movePiece(game.data.gamePieces, game.data.originalPos, game.data.targetedPos);
+      var newMatchPositions = game.collectMatches();
+      if (newMatchPositions.length) {
+        game.replaceMatches(newMatchPositions);
+      } else {
+        game.movePiece(game.data.gamePieces, game.data.targetedPos, game.data.originalPos);
+      }
+      // after move attempt remove all current selection data
+      game.clearSelections();
+    }
+    if (game.data.originalPos && game.data.hoverPos) {
+      // attempt to move to current mouse hover position
+      game.movePiece(game.data.gamePieces, game.data.originalPos, game.data.hoverPos)
     }
     // decrement the multiplier based on time
     if (game.data.multiplier > 0) {

@@ -504,7 +504,11 @@ var display = {
     window.requestAnimationFrame(display.animate);
     // update game model
     game.updateGameState();
-    // redraw live game objects
-    display.redrawGameState();
+    // update display components
+    if (game.data.runStatus === 0) {
+      display.setGameDisabled();
+    } else if (game.data.runStatus === 1) {
+      display.setGameEnabled();
+    }
   }
 };
