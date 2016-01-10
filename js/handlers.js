@@ -2,13 +2,14 @@
 // handles are set to collect at highest level with handling logic contained within the function so as to avoid resetting issues.
 var handlers = {
   setAll: function() {
-    $(window).resize(display.redrawGameStatic);
+    $(window).resize(display.drawPage);
     $(document).on('mousedown', handlers.mouseDownHandling);
     $(document).on('mouseup', handlers.mouseUpHandling);
     $(document).on('mouseover', handlers.mouseOverHandling);
-    $(document).on('mouseout', handlers.mouseOutHandling);
+    $(document).on('mouseout', handlers.mouseMoveHandling);
   },
   mouseDownHandling: function(event) {
+    event.preventDefault();
     // only check for piece selection when game is running
     if (game.data.runStatus === 1) {
       // check all game pieces and tiles for selection
@@ -18,14 +19,14 @@ var handlers = {
         if (event.target === tile) {
           var selectX = Number(event.target.getAttribute('data-x'));
           var selectY = Number(event.target.getAttribute('data-y'));
-          game.setSelectedPiece(selectX, selectY);
+          game.setSelectedPos(selectX, selectY);
         }
       });
       _.each(gamePieces, function(piece) {
         if (event.target === piece) {
           var selectX = Number(event.target.getAttribute('data-x'));
           var selectY = Number(event.target.getAttribute('data-y'));
-          game.setSelectedPiece(selectX, selectY);
+          game.setSelectedPos(selectX, selectY);
         }
       });
     }
@@ -36,7 +37,8 @@ var handlers = {
     // collect and check for play game selection
     var playGameButton = document.getElementById('play-game');
     if (event.target === playGameButton) {
-      display.showGamePage();
+      display.currentPage = 'game';
+      display.drawPage();
     }
     // collect and check for start new round selection
     var newRoundButton = document.getElementsByClassName('new-round-group')[0];
@@ -49,22 +51,25 @@ var handlers = {
       var breakPieceButton = document.getElementsByClassName('game-breaks-piece')[0];
       var breakRowButton = document.getElementsByClassName('game-breaks-row')[0];
       var breakBoardButton = document.getElementsByClassName('game-breaks-board')[0];
-      if (breakPieceButton !== []) {
+      if (breakPieceButton !== [] && game.data.breakPieceStatus) {
         if (breakPieceButton.contains(event.target)) {
           game.breakRandomPiece();
           breakPieceButton.style.opacity = 0.2;
+          game.data.breakPieceStatus = false;
         }
       }
-      if (breakRowButton !== []) {
+      if (breakRowButton !== [] && game.data.breakRowStatus) {
         if (breakRowButton.contains(event.target)) {
           game.breakRandomRow();
           breakRowButton.style.opacity = 0.2;
+          game.data.breakRowStatus = false;
         }
       }
-      if (breakBoardButton !== []) {
+      if (breakBoardButton !== [] && game.data.breakBoardStatus) {
         if (breakBoardButton.contains(event.target)) {
           game.breakBoard();
           breakBoardButton.style.opacity = 0.2;
+          game.data.breakBoardStatus = false;
         }
       }
       // check all game pieces and tiles for targeting
@@ -75,7 +80,7 @@ var handlers = {
         if (event.target === tile) {
           var targetX = Number(event.target.getAttribute('data-x'));
           var targetY = Number(event.target.getAttribute('data-y'));
-          game.setTargetedPiece(targetX, targetY);
+          game.setTargetedPos(targetX, targetY);
           validTarget = true;
         }
       });
@@ -83,47 +88,19 @@ var handlers = {
         if (event.target === piece) {
           var targetX = Number(event.target.getAttribute('data-x'));
           var targetY = Number(event.target.getAttribute('data-y'));
-          game.setTargetedPiece(targetX, targetY);
+          game.setTargetedPos(targetX, targetY);
           validTarget = true;
         }
       });
       if (!validTarget) {
-        // if selection made and no valid location targeted or mouseup event triggered from action
-        // other than selecting a piece clear both selection and target data.
-        // return selected piece to its original positon and update
-        if (game.data.selectedPiece) {
-          game.temporaryMove(game.data.selectedPiece, game.data.originalPos);
-          game.data.selectedPiece = game.data.originalPos;
-        }
+        // if selection made and no valid location targeted clear current selection data
         game.clearSelections();
       }
     }
   },
-  mouseOverHandling: function() {
-    // only check for piece selection when game is running
-    if (game.data.runStatus === 1) {
-      // check all game pieces and tiles for selection
-      var gameTiles = document.getElementsByClassName('game-tile');
-      var gamePieces = document.getElementsByClassName('game-piece');
-      _.each(gameTiles, function(tile) {
-        if (event.target === tile && game.data.selectedPiece) {
-          var hoverX = Number(event.target.getAttribute('data-x'));
-          var hoverY = Number(event.target.getAttribute('data-y'));
-          var hoverPos = [hoverX, hoverY];
-          // update and move for each hover encountered
-          game.temporaryMove(game.data.selectedPiece, hoverPos);
-          game.data.selectedPiece = hoverPos;
-        }
-      });
-      _.each(gamePieces, function(piece) {
-        if (event.target === piece && game.data.selectedPiece) {
-          var hoverX = Number(event.target.getAttribute('data-x'));
-          var hoverY = Number(event.target.getAttribute('data-y'));
-          var hoverPos = [hoverX, hoverY];
-          game.temporaryMove(game.data.selectedPiece, hoverPos);
-          game.data.selectedPiece = hoverPos;
-        }
-      });
-    }
+  mouseMoveHandling: function(event) {
+    event.preventDefault();
+    // grab current cursor co-ordinates
+    game.setMousePos(event.pageX, event.pageY);
   }
 };

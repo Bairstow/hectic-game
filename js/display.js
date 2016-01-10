@@ -5,8 +5,7 @@ var display = {
   pieceColors: ['#0F8', '#F08', '#08F', '#F80', '#80F', '#8F0'],
   highlightColor: '#DDF',
   gameTiles: null,
-  selectedPiece: null,
-  targetedPosition: null,
+  currentPage: 'landing',
   groups: {
     $container: null,
     $navBar: null,
@@ -63,6 +62,21 @@ var display = {
     var containerWidth = display.groups.$container.width();
     display.groups.$footer.css('width', String(containerWidth) + 'px')
   },
+  drawPage: function() {
+    // run generic page setup
+    display.setHandles();
+    display.setContainerHeight();
+    display.setFooterWidth();
+    display.drawNavBar();
+    // run page specific setup
+    if (display.currentPage === 'landing') {
+      display.showLandingPage();
+    }
+    if (display.currentPage === 'game') {
+      display.showGamePage();
+    }
+    display.setHandles();
+  },
   // function to opening landing page
   showLandingPage: function() {
     // display/hide relevant dom elements to the player.
@@ -80,10 +94,8 @@ var display = {
     var gameBoardWidth = display.elts.$gameBoard.width();
     display.elts.$gameBoard.css('height', String(gameBoardWidth) + 'px');
     display.groups.$gameBoardRow.css('visibility', 'visible');
-    // draw static elements
-    display.redrawGameStatic();
-    // draw active elements
-    display.redrawGameState();
+    // draw game board elements
+    display.drawGameWindow();
   },
   drawGameTimer: function() {
     // handle drawing logic for displaying the game timer above the game area
@@ -141,22 +153,17 @@ var display = {
     var boardWidth = display.elts.$gameBoard.outerWidth();
     var tileWidth = Math.floor((boardWidth - 2) / game.data.boardSize);
     // setup a mirrored set of arrays that will hold the tile DOM elements associated with each background tile
-    var newTiles = [];
     _.each(_.range(game.data.boardSize), function(x) {
-      var newCol = [];
       _.each(_.range(game.data.boardSize), function(y) {
-        var newTile = helpers.elt('div','game-tile u-pull-left');
+        var newTile = helpers.elt('div','game-tile');
         // set tile specific style properties
         newTile.setAttribute('data-x', x);
         newTile.setAttribute('data-y', y);
         newTile.style.top = String(y * tileWidth) + 'px';
         newTile.style.left = String(x * tileWidth) + 'px';
         display.elts.$gameBoard.append($(newTile));
-        newCol.push(newTile);
       });
-      newTiles.push(newCol);
     });
-    display.gameTiles = newTiles;
     $('.game-tile').css('width', String(tileWidth * 0.9) + 'px');
     $('.game-tile').css('height', String(tileWidth * 0.9) + 'px');
     $('.game-tile').css('margin', String(tileWidth * 0.05) + 'px');
@@ -166,33 +173,22 @@ var display = {
     // clear current render
     $('.game-piece').remove();
     var boardWidth = display.elts.$gameBoard.outerWidth();
-    //display.elts.$gameBoard.css('padding', String(boardWidth * 0.048) + 'px');
     var tileWidth = Math.floor((boardWidth - 2) / game.data.boardSize);
-    // iterate over the game piece data and generate a new marker piece render
-    // for each position.
+    // iterate over the game piece data and generate a new marker piece render for each position.
     var gamePieces = game.data.gamePieces;
-
     _.each(gamePieces, function(gameRow, x) {
       _.each(gameRow, function(gamePiece, y) {
         var newMarker = helpers.elt('div', 'game-piece');
-        // current piece marker position from game data
-        var currPos = gamePiece.position;
-        var currMarker = gamePiece.marker;
+        // current piece data
         var currCategory = gamePiece.category;
-        // set piece specific style properties
-        if (game.data.selectedPiece &&
-            game.data.selectedPiece[0] === currPos[0] &&
-            game.data.selectedPiece[1] === currPos[1]) {
-          newMarker.style.opacity = 0.6;
-        } else {
-          newMarker.style.opacity = 1;
-        }
+        var currMarker = gamePiece.marker;
         newMarker.style.backgroundColor = display.pieceColors[currCategory];
-        newMarker.setAttribute('data-x', currPos[0]);
-        newMarker.setAttribute('data-y', currPos[1]);
-        newMarker.style.top = String(currMarker[0] * tileWidth) + 'px';
-        newMarker.style.left = String(currMarker[1] * tileWidth) + 'px';
+        newMarker.setAttribute('data-x', x);
+        newMarker.setAttribute('data-y', y);
+        newMarker.style.left = String(currMarker[0] * tileWidth) + 'px';
+        newMarker.style.top = String(currMarker[1] * tileWidth) + 'px';
         display.elts.$gameBoard.append($(newMarker));
+        game.data.gamePieces[x][y].markerElt = newMarker;
       });
     });
     $('.game-piece').css('width', String(tileWidth * 0.7) + 'px');
@@ -215,7 +211,7 @@ var display = {
       ' L ' + String(cWidth) + ' ' + String(cHeight) + ' L ' + String(cWidth) +
       ' ' + String(cHeight - barHeight);
     gameMultBar.setAttribute('d', barPathData);
-    var gameMultBarLevel = helpers.eltNS('path', 'game-multiplier-bar primary-fill-path');
+    var gameMultBarLevel = helpers.eltNS('path', 'game-multiplier-bar-level primary-fill-path');
     var barLevelPathData = 'M1 ' + String(cHeight - barLevel) + ' L 1 ' + String(cHeight) +
       ' L ' + String(cWidth) + ' ' + String(cHeight) + ' L ' + String(cWidth) +
       ' ' + String(cHeight - barLevel);
@@ -311,21 +307,6 @@ var display = {
     gameBreaksSVG.appendChild(breakBoardGroup);
     gameBreaksSVG.appendChild(breakBreakText);
     $('.game-breaks').append($(gameBreaksSVG));
-  },
-  redrawGameState: function() {
-    // active elements to be redrawn on each frame.
-    // static elements such as the break buttons are redrawn only on window resizing.
-    display.drawGameTimer();
-    display.drawGameScore();
-    display.drawGameTiles();
-    display.drawGamePieces();
-    display.drawGameMultiplier();
-  },
-  redrawGameStatic: function() {
-    // called on resize and initialising.
-    display.drawGameArea();
-    display.drawNavBar();
-    display.drawGameBreaks();
   },
   drawNavBar: function() {
     // handle draw procedure for nav bar border. (elements should be dynamically sized)
@@ -476,8 +457,84 @@ var display = {
     display.groups.$gameArea.append($(gameBreaks));
     display.groups.$gameArea.append($(gameBoard));
     display.groups.$gameArea.append($(gameMultiplier));
-    // set newly created DOM handles
+  },
+  checkMouseLocation() {
+    // grab location data for cursor and gameboard
+    var currPos = game.data.mousePos;
+    var boardWidth = display.elts.$gameBoard.outerWidth();
+    var boardOffset = display.elts.$gameBoard.offset();
+    var tileWidth = Math.floor((boardWidth - 2) / game.data.boardSize);
+    var hoverPos = []
+    if (currPos) {
+      // make sure mouse coords are logged
+      game.allPieces(game.data.gamePieces, function(pieces, pX, pY) {
+        // check if cursor falls within current tile
+        if ((currPos[0] >= (boardOffset.left + tileWidth * pX)) &&
+            (currPos[0] < (boardOffset.left + tileWidth * (pX + 1))) &&
+            (currPos[1] >= (boardOffset.top + tileWidth * pY)) &&
+            (currPos[1] < (boardOffset.top + tileWidth * (pY + 1)))) {
+          hoverPos = [pX, pY];
+        }
+      });
+    }
+    if (hoverPos) {
+      return hoverPos;
+    } else {
+      return false;
+    }
+  },
+  drawGameWindow: function() {
+    // called on resize and initialising.
+    display.drawGameArea();
     display.setHandles();
+    display.drawGameTimer();
+    display.drawGameScore();
+    display.drawGameTiles();
+    display.drawGamePieces();
+    display.drawGameMultiplier();
+    display.drawGameBreaks();
+  },
+  updateGameElements: function() {
+    // update timer
+    var gameTimerValue = document.getElementsByClassName('game-timer-value')[0];
+    gameTimerValue.textContent = String((game.data.time).toFixed(2)) + 's';
+    // update score
+    var gameScoreValue = document.getElementsByClassName('game-score-value')[0];
+    gameScoreValue.textContent = String((game.data.score * 100).toFixed(0));
+    // update pieces
+    // selected piece highlighting
+    var boardWidth = display.elts.$gameBoard.outerWidth();
+    var tileWidth = Math.floor((boardWidth - 2) / game.data.boardSize);
+    game.allPieces(game.data.gamePieces, function(pieces, pX, pY) {
+      var currPiece = pieces[pX][pY];
+      //currPiece.markerElt.textContent = 'x' + String(pX) + ' y' + String(pY);
+      currPiece.markerElt.style.backgroundColor = display.pieceColors[currPiece.category];
+      currPiece.markerElt.setAttribute('data-x', pX);
+      currPiece.markerElt.setAttribute('data-y', pY);
+      currPiece.markerElt.style.left = String(currPiece.marker[0] * tileWidth) + 'px';
+      currPiece.markerElt.style.top = String(currPiece.marker[1] * tileWidth) + 'px';
+      // check and style current selection position if it exists
+      if (game.data.currPos) {
+        if (pX === game.data.currPos[0] && pY === game.data.currPos[1]) {
+          currPiece.markerElt.style.opacity = 0.4;
+        }
+      } else {
+        // all other elements
+        currPiece.markerElt.style.opacity = 1;
+      }
+    });
+    // update multiplier
+    var gameMultText = document.getElementsByClassName('game-multiplier-text')[0];
+    gameMultText.textContent = String((game.data.multiplier * 100).toFixed(0)) + '%';
+    var cWidth = Math.floor($('.game-multiplier').width());
+    var cHeight = Math.floor($('.game-multiplier').height());
+    var barHeight = Math.floor(cHeight * 0.75);
+    var barLevel = Math.floor(barHeight * game.data.multiplier);
+    var barLevelPathData = 'M1 ' + String(cHeight - barLevel) + ' L 1 ' + String(cHeight) +
+      ' L ' + String(cWidth) + ' ' + String(cHeight) + ' L ' + String(cWidth) +
+      ' ' + String(cHeight - barLevel);
+    var gameMultBarLevel = document.getElementsByClassName('game-multiplier-bar-level')[0];
+    gameMultBarLevel.setAttribute('d', barLevelPathData);
   },
   setGameEnabled: function() {
     // set visual properties relating to game running
@@ -502,13 +559,16 @@ var display = {
   // handle display updates via animation frame requests
   animate: function() {
     window.requestAnimationFrame(display.animate);
-    // update game model
-    game.updateGameState();
     // update display components
     if (game.data.runStatus === 0) {
       display.setGameDisabled();
     } else if (game.data.runStatus === 1) {
+      // update game model
+      game.updateGameState();
       display.setGameEnabled();
+    }
+    if (display.currentPage === 'game') {
+      display.updateGameElements();
     }
   }
 };

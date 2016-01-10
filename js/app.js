@@ -23,10 +23,14 @@ var game = {
     gameStatus: 'waiting',
     runStatus: 0,
     boardSize: 8,
-    currentPos: null,
+    currPos: null,
     targetedPos: null,
     hoverPos: null,
+    mousePos: null,
     gamePieces: null,
+    breakPieceStatus: false,
+    breakRowStatus: false,
+    breakBoardStatus: false,
     startTime: null,
     time: 0,
     multiplier: 0,
@@ -41,6 +45,8 @@ var game = {
         var newPiece = {
           category: Math.floor(Math.random() * 6),
           marker: [x,y - 1],
+          markerElt: null,
+          id: ((x * game.data.boardSize) + y)
         };
         newCol.push(newPiece);
       });
@@ -55,36 +61,6 @@ var game = {
       _.each(col, function(piece, y) {
         pieceOperation(pieces, x, y);
       });
-    });
-  },
-  updateMarkerPositions: function(stepDistance) {
-    game.allPieces(game.data.gamePieces, function(pieces, x, y) {
-      var xDist = x - pieces[x][y].marker[0];
-      var yDist = y - pieces[x][y].marker[1];
-      if (xDist || yDist) {
-        debugger
-      }
-      // if discrepancy between marker and tile x positions step closer together
-      if (xDist) {
-        if (Math.abs(xDist) < stepDistance) {
-          // move marker back to tile position
-          pieces[x][y].marker[0] = x;
-        } else if (xDist < 0) {
-          pieces[x][y].marker[0] -= stepDistance;
-        } else {
-          pieces[x][y].marker[0] += stepDistance;
-        }
-      }
-      if (yDist) {
-        if (Math.abs(yDist) < stepDistance) {
-          // move marker back to tile position
-          pieces[x][y].marker[1] = pieces[x][y].position[1];
-        } else if (yDist < 0) {
-          pieces[x][y].marker[1] -= stepDistance;
-        } else {
-          pieces[x][y].marker[1] += stepDistance;
-        }
-      }
     });
   },
   // piece operation checking match for given position
@@ -137,7 +113,7 @@ var game = {
     }
   },
   // piece operation to randomise initial types so no matches to begin
-  unMatchPieces: function(pieces, pX, pY) {
+  unmatchPieces: function(pieces, pX, pY) {
     while (game.checkMatch(pieces, pX, pY)) {
       pieces[pX][pY].category = Math.floor(Math.random() * 6);
     }
@@ -174,27 +150,28 @@ var game = {
       pieces[pX][pY] = temp;
     }
   },
-  movePiece: function(pieces, oldPos, newPos) {
+  movePiece: function(oldPos, newPos) {
     // pieces can only be moved in cardinal directions
+    ///debugger
     if (oldPos[0] === newPos[0] ||
         oldPos[1] === newPos[1]) {
       var currPos = [oldPos[0],oldPos[1]];
-      while (currPos !== newPos) {
+      while (currPos[0] !== newPos[0] || currPos[1] !== newPos[1]) {
         // check directional discrepancy and adjust appropriately
         if (currPos[0] < newPos[0]) {
-          game.movePieceRight(pieces, currPos[0], currPos[1]);
+          game.movePieceRight(game.data.gamePieces, currPos[0], currPos[1]);
           currPos[0] += 1;
         }
         if (currPos[0] > newPos[0]) {
-          game.movePieceLeft(pieces, currPos[0], currPos[1]);
+          game.movePieceLeft(game.data.gamePieces, currPos[0], currPos[1]);
           currPos[0] -= 1;
         }
         if (currPos[1] < newPos[1]) {
-          game.movePieceDown(pieces, currPos[0], currPos[1]);
+          game.movePieceDown(game.data.gamePieces, currPos[0], currPos[1]);
           currPos[1] += 1;
         }
         if (currPos[1] > newPos[1]) {
-          game.movePieceUp(pieces, currPos[0], currPos[1]);
+          game.movePieceUp(game.data.gamePieces, currPos[0], currPos[1]);
           currPos[1] -= 1;
         }
       }
@@ -203,28 +180,31 @@ var game = {
     }
     return newPos;
   },
-  // find selected piece from gamePieces
-  setcurrentPos: function(pX, pY) {
-    // redundant assignment functions that used to contain more logic.
-    game.data.currentPos = [pX, pY];
+  // assign selected pos
+  setSelectedPos: function(pX, pY) {
+    game.data.currPos = [pX, pY];
     game.data.originalPos = [pX, pY];
   },
-  // find selected piece from gamePieces
-  settargetedPos: function(pX, pY) {
+  // assign targeted pos
+  setTargetedPos: function(pX, pY) {
     game.data.targetedPos = [pX, pY];
   },
-  // find selected piece from gamePieces
-  sethoverPos: function(pX, pY) {
+  // assign hover pos
+  setHoverPos: function(pX, pY) {
     game.data.hoverPos = [pX, pY];
   },
+  // assign current mouse coords
+  setMousePos: function(pX, pY) {
+    game.data.mousePos = [pX, pY];
+  },
   // function takes an element and assigns it a new category and moves it to top of its column
-  replacePiece: function(pieces, oldPos) {
+  replacePiece: function(oldPos) {
     // set new random category for the piece and move it to the 0 position of it column (i.e the
     // top of the current column);
     var topOfColumn = [oldPos[0], 0];
-    pieces[oldPos[0]][oldPos[1]].marker = [oldPos[0], 0];
-    pieces[oldPos[0]][oldPos[1]].category = Math.floor(Math.random() * 6);
-    game.movePiece(pieces, oldPos, topOfColumn);
+    game.data.gamePieces[oldPos[0]][oldPos[1]].marker = [oldPos[0], -1];
+    game.data.gamePieces[oldPos[0]][oldPos[1]].category = Math.floor(Math.random() * 6);
+    game.movePiece(oldPos, topOfColumn);
   },
   // cycle through game pieces and build positional list of pieces that are currently matched
   collectMatches: function() {
@@ -240,7 +220,7 @@ var game = {
     var newMatchPositions = matches;
     while (newMatchPositions.length > 0) {
       _.each(newMatchPositions, function(matchPosition) {
-        game.replacePiece(game.data.gamePieces, matchPosition);
+        game.replacePiece(matchPosition);
         // whenever a piece is removed increment the score
         game.data.score += (1 * (1 + game.data.multiplier));
       });
@@ -253,10 +233,40 @@ var game = {
     }
   },
   clearSelections: function() {
-    game.data.currentPos = null;
+    game.data.currPos = null;
     game.data.targetedPos = null;
     game.data.originalPos = null;
     game.data.hoverPos = null;
+  },
+  updateMarkerPositions: function(stepDistance) {
+    game.allPieces(game.data.gamePieces, function(pieces, x, y) {
+      var xDist = x - pieces[x][y].marker[0];
+      var yDist = y - pieces[x][y].marker[1];
+      if (xDist || yDist) {
+        //debugger
+      }
+      // if discrepancy between marker and tile x positions step closer together
+      if (xDist) {
+        if (Math.abs(xDist) < stepDistance) {
+          // move marker back to tile position
+          pieces[x][y].marker[0] = x;
+        } else if (xDist < 0) {
+          pieces[x][y].marker[0] -= stepDistance;
+        } else {
+          pieces[x][y].marker[0] += stepDistance;
+        }
+      }
+      if (yDist) {
+        if (Math.abs(yDist) < stepDistance) {
+          // move marker back to tile position
+          pieces[x][y].marker[1] = y;
+        } else if (yDist < 0) {
+          pieces[x][y].marker[1] -= stepDistance;
+        } else {
+          pieces[x][y].marker[1] += stepDistance;
+        }
+      }
+    });
   },
   breakRandomPiece: function() {
     // mark random board piece to break
@@ -306,25 +316,36 @@ var game = {
         game.clearSelections();
       }
     }
-    // return currentPos to its original position
-    game.movePiece(game.data.gamePieces, game.data.currentPos, game.data.originalPos);
+    // return currPos to its original position
+    if (game.data.currPos) {
+      if (game.data.currPos[0] !== game.data.originalPos[0] ||
+          game.data.currPos[1] !== game.data.originalPos[1]) {
+        game.movePiece(game.data.currPos, game.data.originalPos);
+      }
+    }
     // if player has input a move update piece position and then replace matches.
     if (game.data.originalPos && game.data.targetedPos) {
       // move piece to target position, check matches, leave if matches found or move back to original
       // position if there is none.
-      game.movePiece(game.data.gamePieces, game.data.originalPos, game.data.targetedPos);
+      game.movePiece(game.data.originalPos, game.data.targetedPos);
       var newMatchPositions = game.collectMatches();
       if (newMatchPositions.length) {
         game.replaceMatches(newMatchPositions);
       } else {
-        game.movePiece(game.data.gamePieces, game.data.targetedPos, game.data.originalPos);
+        game.movePiece(game.data.targetedPos, game.data.originalPos);
       }
       // after move attempt remove all current selection data
       game.clearSelections();
-    }
-    if (game.data.originalPos && game.data.hoverPos) {
-      // attempt to move to current mouse hover position
-      game.movePiece(game.data.gamePieces, game.data.originalPos, game.data.hoverPos)
+    } else {
+      // check if current cursor position overlaps a tile location
+      var hoverPos = display.checkMouseLocation();
+      if (hoverPos && game.data.originalPos) {
+        // attempt to move to current mouse hover position if not original pos
+        if (hoverPos[0] !== game.data.originalPos[0] || hoverPos[1] !== game.data.originalPos[1]) {
+          //debugger
+          game.data.currPos = game.movePiece(game.data.originalPos, hoverPos);
+        }
+      }
     }
     // decrement the multiplier based on time
     if (game.data.multiplier > 0) {
@@ -337,21 +358,21 @@ var game = {
     // set initial conditions
     game.data.startTime = Date.now();
     game.data.gamePieces = game.generateBoard();
+    // reattach a marker element to each of the game pieces
+    display.drawGamePieces();
     game.data.time = 30;
     game.data.score = 0;
     game.data.runStatus = 1;
+    game.data.breakPieceStatus = true;
+    game.data.breakRowStatus = true;
+    game.data.breakBoardStatus = true;
     display.drawGameBreaks();
     display.setGameEnabled();
   },
   // group functions calls to be made on page initiation
   init: function() {
-      display.setHandles();
-      // make sure container is set to full page size.
-      display.setContainerHeight();
-      display.drawNavBar();
-      display.setFooterWidth();
-      display.showLandingPage();
       game.data.gamePieces = game.generateBoard();
+      display.drawPage();
       handlers.setAll();
       display.animate();
   }

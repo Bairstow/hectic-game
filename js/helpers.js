@@ -25,5 +25,5 @@ var helpers = {
     for (var i = 1; i < arguments.length; i++) {
       elt.setAttribute(arguments[i][0], arguments[i][1]);
     }
-  }
+  },
 };
