@@ -43,7 +43,7 @@ var game = {
       _.each(_.range(game.data.boardSize), function(y) {
         var newPiece = {
           category: Math.floor(Math.random() * 6),
-          marker: [x,y - 1],
+          marker: [x,y],
           markerElt: null,
           id: ((x * game.data.boardSize) + y)
         };
