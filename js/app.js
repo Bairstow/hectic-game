@@ -25,7 +25,6 @@ var game = {
     boardSize: 8,
     currPos: null,
     targetedPos: null,
-    hoverPos: null,
     mousePos: null,
     gamePieces: null,
     breakPieceStatus: false,
@@ -189,10 +188,6 @@ var game = {
   setTargetedPos: function(pX, pY) {
     game.data.targetedPos = [pX, pY];
   },
-  // assign hover pos
-  setHoverPos: function(pX, pY) {
-    game.data.hoverPos = [pX, pY];
-  },
   // assign current mouse coords
   setMousePos: function(pX, pY) {
     game.data.mousePos = [pX, pY];
@@ -340,11 +335,7 @@ var game = {
       // check if current cursor position overlaps a tile location
       var hoverPos = display.checkMouseLocation();
       if (hoverPos && game.data.originalPos) {
-        // attempt to move to current mouse hover position if not original pos
-        if (hoverPos[0] !== game.data.originalPos[0] || hoverPos[1] !== game.data.originalPos[1]) {
-          //debugger
-          game.data.currPos = game.movePiece(game.data.originalPos, hoverPos);
-        }
+        game.data.currPos = game.movePiece(game.data.originalPos, hoverPos);
       }
     }
     // decrement the multiplier based on time

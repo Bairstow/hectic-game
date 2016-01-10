@@ -9,6 +9,7 @@ var display = {
   groups: {
     $container: null,
     $navBar: null,
+    $navBarBkg: null,
     $logo: null,
     $playSelect: null,
     $gameArea: null,
@@ -26,6 +27,7 @@ var display = {
   setHandles: function() {
     display.groups.$container = $('.container');
     display.groups.$navBar = $('.nav-bar');
+    display.groups.$navBarBkg = $('.nav-bar-bkg');
     display.elts.$siteIcon = $('.site-icon');
     display.elts.$playerDetail = $('.player-detail');
     display.elts.$navIcon = $('.nav-icon');
@@ -329,7 +331,7 @@ var display = {
       ', ' + String(cWidth - 2) + ' ' + String(vportCurve) + ' L ' + String(cWidth - 2) + ' 0';
     navBarPath.setAttribute('d', pathData);
     navBarSVG.appendChild(navBarPath);
-    display.groups.$navBar.append($(navBarSVG));
+    display.groups.$navBarBkg.append($(navBarSVG));
     // dynamically produce nav bar elements for proper display on resizing
     var navBarHome = helpers.elt('div', 'two columns u-pull-left site-icon');
     navBarHome.style.paddingTop = String(Math.floor(vportCurve * 0.2)) + 'px';
@@ -354,6 +356,7 @@ var display = {
     // set nav bar sizing properties based on current dimensions
     display.groups.$navBar.css('font-size', String(Math.floor(vportCurve * 1.2)) + 'px');
     display.groups.$navBar.css('line-height', String(Math.floor(vportCurve * 1.8)) + 'px');
+    display.groups.$navBar.css('background-color', 'transparent');
     // set newly created DOM handles
     display.setHandles();
   },

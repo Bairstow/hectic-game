@@ -32,8 +32,12 @@ var handlers = {
     }
   },
   mouseUpHandling: function(event) {
-    // echo target
-    // console.log(event.target);
+    // collect and check for home navigation
+    var homeIcon = document.getElementsByClassName('site-icon')[0];
+    if (event.target === homeIcon) {
+      display.currentPage = 'landing';
+      display.drawPage();
+    }
     // collect and check for play game selection
     var playGameButton = document.getElementById('play-game');
     if (event.target === playGameButton) {
@@ -42,8 +46,10 @@ var handlers = {
     }
     // collect and check for start new round selection
     var newRoundButton = document.getElementsByClassName('new-round-group')[0];
-    if (newRoundButton.contains(event.target)) {
-      game.startNewRound();
+    if (newRoundButton) {
+      if (newRoundButton.contains(event.target)) {
+        game.startNewRound();
+      }
     }
     // only check for piece selection when game is running
     if (game.data.runStatus === 1) {
