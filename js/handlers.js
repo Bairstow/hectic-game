@@ -6,7 +6,7 @@ var handlers = {
     $(document).on('mousedown', handlers.mouseDownHandling);
     $(document).on('mouseup', handlers.mouseUpHandling);
     $(document).on('mouseover', handlers.mouseOverHandling);
-    $(document).on('mouseout', handlers.mouseMoveHandling);
+    $(document).on('mousemove', handlers.mouseMoveHandling);
   },
   mouseDownHandling: function(event) {
     event.preventDefault();
@@ -38,11 +38,44 @@ var handlers = {
       display.currentPage = 'landing';
       display.drawPage();
     }
+    // collect and check for player customisation selection
+    var navIcon = document.getElementsByClassName('nav-icon')[0];
+    if (navIcon) {
+      if (navIcon.contains(event.target)) {
+        display.drawNameEdit();
+      }
+    }
+    // collect and check for player name input
+    var nameInput = document.getElementsByClassName('player-label-input')[0];
+    var nameInputAccept = document.getElementsByClassName('input-accept')[0];
+    if (event.target === nameInput) {
+      nameInput.focus();
+    }
+    if (event.target === nameInputAccept) {
+      if (nameInput.value) {
+        game.data.playerName = nameInput.value;
+        localStorage.setItem('playerName', nameInput.value);
+        $('.profile-name').text(game.data.playerName);
+        display.clearAlertScreen();
+      }
+    }
+    // collect and check for alert pane exit selection
+    var alertExit = document.getElementsByClassName('alert-exit')[0];
+    if (alertExit) {
+      if (alertExit.contains(event.target)) {
+        display.clearAlertScreen();
+      }
+    }
     // collect and check for play game selection
     var playGameButton = document.getElementById('play-game');
     if (event.target === playGameButton) {
       display.currentPage = 'game';
       display.drawPage();
+      // if no player name found locally for player prompt for one now.
+      var playerName = localStorage.getItem('playerName');
+      if (!(playerName)) {
+        display.drawNameEdit();
+      }
     }
     // collect and check for start new round selection
     var newRoundButton = document.getElementsByClassName('new-round-group')[0];

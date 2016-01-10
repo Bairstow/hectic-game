@@ -23,6 +23,8 @@ var game = {
     gameStatus: 'waiting',
     runStatus: 0,
     boardSize: 8,
+    playerName: null,
+    playerHighScore: null,
     currPos: null,
     targetedPos: null,
     mousePos: null,
@@ -34,6 +36,21 @@ var game = {
     time: 0,
     multiplier: 0,
     score: 0
+  },
+  // access local storage for player details
+  loadData: function() {
+    var playerName = localStorage.getItem('playerName');
+    if (playerName) {
+      game.data.playerName = playerName;
+    } else {
+      game.data.playerName = 'Player';
+    }
+    var playerScore = localStorage.getItem('playerHighScore');
+    if (playerScore) {
+      game.data.playerHighScore = playerScore;
+    } else {
+      game.data.playerHighScore = 0;
+    }
   },
   // function for generating initial board positions
   generateBoard: function() {
@@ -309,6 +326,14 @@ var game = {
         game.data.multiplier = 0;
         game.data.runStatus = 0;
         game.clearSelections();
+        // check if current highscore has been beaten
+        if (game.data.score > game.data.playerHighScore) {
+          // alert the player
+          display.drawHighScoreAlert();
+          // update locally and to storage
+          game.data.playerHighScore = game.data.score;
+          localStorage.setItem('playerHighScore', game.data.score);
+        }
       }
     }
     // return currPos to its original position
@@ -363,6 +388,7 @@ var game = {
   // group functions calls to be made on page initiation
   init: function() {
       game.data.gamePieces = game.generateBoard();
+      game.loadData();
       display.drawPage();
       handlers.setAll();
       display.animate();

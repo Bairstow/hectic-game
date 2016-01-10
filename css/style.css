@@ -132,6 +132,51 @@ body {
   /*border: solid 2px red;*/
 }
 
+.overlay {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  z-index: 100;
+  background-color: #000;
+  opacity: 0.4;
+}
+.alert-pane {
+  position: absolute;
+  z-index: 101;
+  min-height: 8rem;
+  background-color: #FFF;
+  border-radius: 2rem;
+  border: solid 4px #F4B350;
+  opacity: 1;
+  padding-bottom: 2rem;
+}
+.alert-exit {
+  position: absolute;
+  top: 2rem;
+  right: 2.2rem;
+  color: #F4B350;
+}
+.alert-info {
+  position: absolute;
+  font-family: "Orbitron";
+  font-size: 1.8rem;
+  color: #555;
+  top: 2.2rem;
+  left: 2.2rem;
+}
+.player-label-input {
+  color: #555;
+  line-height: 2.2rem;
+  padding-left: 0.4rem;
+  margin-right: 1rem;
+}
+.input-accept {
+  font-size: 2rem;
+}
+.input-accept:hover {
+  color: green;
+}
+
 .footer-row {
   position: fixed;
   bottom: 1rem;

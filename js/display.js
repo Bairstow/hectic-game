@@ -223,7 +223,7 @@ var display = {
     gameMultText.style.fontSize = String(Math.floor(cHeight * 0.08)) + 'px';
     var gameMultBarMask = helpers.eltNS('path', 'game-multiplier-mask mask-fill-path');
     var maskPathData = 'M0 ' + String(cHeight - barHeight - 1) + ' L 0 ' + String(cHeight) +
-      ' L 1 ' + String(cHeight) + ' L ' + String(cWidth * 0.25) + ' ' + String(cHeight - barHeight * 0.88) +
+      ' L 1 ' + String(cHeight) + ' L ' + String(cWidth * 0.18) + ' ' + String(cHeight - barHeight * 0.92) +
        ' L ' + String(cWidth) + ' ' + String(cHeight - barHeight) + ' L ' + String(cWidth) + ' ' +
        String(cHeight - barHeight - 1);
     gameMultBarMask.setAttribute('d', maskPathData);
@@ -340,7 +340,7 @@ var display = {
     navBarProfile.style.paddingTop = String(Math.floor(vportCurve * 0.2)) + 'px';
     var navBarProfileName = helpers.elt('div', 'profile-name');
     var navBarProfileIcon = helpers.elt('i', 'icon ion-person');
-    navBarProfileName.textContent = 'FatDavo';
+    navBarProfileName.textContent = game.data.playerName;
     navBarProfileName.style.display = 'inline-block';
     navBarProfileIcon.style.display = 'inline-block';
     navBarProfile.appendChild(navBarProfileName);
@@ -461,6 +461,56 @@ var display = {
     display.groups.$gameArea.append($(gameBoard));
     display.groups.$gameArea.append($(gameMultiplier));
   },
+  drawAlertScreen: function() {
+    $('.overlay').remove();
+    $('.alert-pane').remove();
+    // overlay a dark 'screen' on window the draw alert pane with exit icon on top.
+    var windowWidth = display.getViewportWidth();
+    var windowHeight = display.getViewportHeight();
+    var screenOverlay = helpers.elt('div', 'overlay');
+    screenOverlay.style.width = String(windowWidth) + 'px';
+    screenOverlay.style.height = String(windowHeight) + 'px';
+    $('body').append($(screenOverlay));
+    var alertPane = helpers.elt('div', 'alert-pane');
+    alertPane.style.width = String(windowWidth * 0.5) + 'px';
+    alertPane.style.top = String(windowHeight * 0.1) + 'px';
+    alertPane.style.left = String(windowWidth * 0.25) + 'px';
+    var alertExit = helpers.elt('i', 'icon ion-close-round alert-exit');
+    var alertInfo = helpers.elt('div', 'alert-info');
+    alertInfo.style.width = String(windowWidth * 0.45) + 'px';
+    alertPane.appendChild(alertExit);
+    alertPane.appendChild(alertInfo);
+    $('body').append($(alertPane));
+  },
+  clearAlertScreen: function() {
+    $('.overlay').remove();
+    $('.alert-pane').remove();
+  },
+  drawNameEdit: function() {
+    display.drawAlertScreen();
+    var alertInfo = document.getElementsByClassName('alert-info')[0];
+    var alertInfoWidth = $('.alert-info').width();
+    var playerLabel = helpers.elt('div');
+    playerLabel.textContent = 'Enter player name: ';
+    var playerLabelInput = helpers.elt('input', 'player-label-input');
+    playerLabelInput.setAttribute('placeholder', 'Name');
+    playerLabelInput.style.display = 'inline-block';
+    playerLabelInput.style.width = String(alertInfoWidth * 0.7) + 'px';
+    var inputAccept = helpers.elt('i', 'icon ion-checkmark-round input-accept');
+    inputAccept.style.display = 'inline-block';
+    alertInfo.appendChild(playerLabel);
+    alertInfo.appendChild(playerLabelInput);
+    alertInfo.appendChild(inputAccept);
+    playerLabelInput.focus();
+  },
+  drawHighScoreAlert: function() {
+    display.drawAlertScreen();
+    var alertInfo = document.getElementsByClassName('alert-info')[0];
+    var highScoreMessage = helpers.elt('div');
+    highScoreMessage.textContent = 'Congratulations! You achieved a new high score of ' +
+      String((game.data.score * 100).toFixed(0)) + ' internet points.';
+    alertInfo.appendChild(highScoreMessage);
+  },
   checkMouseLocation() {
     // grab location data for cursor and gameboard
     var currPos = game.data.mousePos;
@@ -507,6 +557,7 @@ var display = {
     // update pieces
     // selected piece highlighting
     var boardWidth = display.elts.$gameBoard.outerWidth();
+    var boardOffset = display.elts.$gameBoard.offset();
     var tileWidth = Math.floor((boardWidth - 2) / game.data.boardSize);
     game.allPieces(game.data.gamePieces, function(pieces, pX, pY) {
       var currPiece = pieces[pX][pY];
@@ -516,14 +567,40 @@ var display = {
       currPiece.markerElt.setAttribute('data-y', pY);
       currPiece.markerElt.style.left = String(currPiece.marker[0] * tileWidth) + 'px';
       currPiece.markerElt.style.top = String(currPiece.marker[1] * tileWidth) + 'px';
+      var gameTiles = document.getElementsByClassName('game-tile');
       // check and style current selection position if it exists
       if (game.data.currPos) {
         if (pX === game.data.currPos[0] && pY === game.data.currPos[1]) {
-          currPiece.markerElt.style.opacity = 0.4;
+          currPiece.markerElt.style.opacity = 0.8;
+          var currPieceLeft = Math.min((boardOffset.left + boardWidth), Math.max(boardOffset.left, game.data.mousePos[0]));
+          var currPieceTop = Math.min((boardOffset.top + boardWidth), Math.max(boardOffset.top, game.data.mousePos[1]));
+          currPiece.markerElt.style.left = String(currPieceLeft - boardOffset.left - tileWidth/2) + 'px';
+          currPiece.markerElt.style.top = String(currPieceTop - boardOffset.top - tileWidth/2) + 'px';
+          // if selected piece is found highlight row and column of original position
+          _.each(gameTiles, function(tile) {
+            var tileX = Number(tile.getAttribute('data-x'));
+            var tileY = Number(tile.getAttribute('data-y'));
+            // check column
+            if (tileX === game.data.originalPos[0]) {
+              tile.style.backgroundColor = '#777';
+            }
+            // check row
+            if (tileY === game.data.originalPos[1]) {
+              tile.style.backgroundColor = '#777';
+              if (tileX === game.data.originalPos[0]) {
+                // original pos
+                tile.style.backgroundColor = '#999';
+              }
+            }
+          });
         }
       } else {
         // all other elements
         currPiece.markerElt.style.opacity = 1;
+        // reset all tile highlighting
+        _.each(gameTiles, function(tile) {
+          tile.style.backgroundColor = '#555';
+        });
       }
     });
     // update multiplier
