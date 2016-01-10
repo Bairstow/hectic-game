@@ -511,7 +511,7 @@ var display = {
       String((game.data.score * 100).toFixed(0)) + ' internet points.';
     alertInfo.appendChild(highScoreMessage);
   },
-  checkMouseLocation() {
+  checkMouseLocation: function() {
     // grab location data for cursor and gameboard
     var currPos = game.data.mousePos;
     var boardWidth = display.elts.$gameBoard.outerWidth();
