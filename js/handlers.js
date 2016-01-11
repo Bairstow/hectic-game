@@ -7,6 +7,12 @@ var handlers = {
     $(document).on('mouseup', handlers.mouseUpHandling);
     $(document).on('mouseover', handlers.mouseOverHandling);
     $(document).on('mousemove', handlers.mouseMoveHandling);
+    // live leaderboard database listener
+    var scoreListView = game.data.scoreListRef.limitToLast(5);
+    // set listener for on load update.
+    scoreListView.on('value', function(scoreSnapShot) {
+      display.currentLeaderboard = scoreSnapShot.val();
+    });
   },
   mouseDownHandling: function(event) {
     event.preventDefault();
@@ -59,6 +65,18 @@ var handlers = {
         display.clearAlertScreen();
       }
     }
+    // collect and check for player score input
+    var scoreInput = document.getElementsByClassName('score-input')[0];
+    if (scoreInput) {
+      if (event.target === scoreInput) {
+        var playerScoreRef = game.data.scoreListRef.child(game.data.playerName);
+        playerScoreRef.setWithPriority({
+          name:game.data.playerName,
+          score:game.data.playerHighScore},
+          game.data.playerHighScore );
+        display.clearAlertScreen();
+      }
+    }
     // collect and check for alert pane exit selection
     var alertExit = document.getElementsByClassName('alert-exit')[0];
     if (alertExit) {
@@ -76,6 +94,12 @@ var handlers = {
       if (!(playerName)) {
         display.drawNameEdit();
       }
+    }
+    // collect and check for high score page navigation
+    var viewHighScoresButton = document.getElementById('view-high-scores');
+    if (event.target === viewHighScoresButton) {
+      display.currentPage = 'highScores';
+      display.drawPage();
     }
     // collect and check for start new round selection
     var newRoundButton = document.getElementsByClassName('new-round-group')[0];

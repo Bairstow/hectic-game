@@ -34,6 +34,7 @@ var game = {
     breakRowStatus: false,
     breakBoardStatus: false,
     breakAudio: new Audio('audio/bubble.wav'),
+    scoreListRef: new Firebase('https://vivid-torch-4469.firebaseio.com//scoreList'),
     startTime: null,
     time: 0,
     multiplier: 0,
@@ -53,6 +54,11 @@ var game = {
     } else {
       game.data.playerHighScore = 0;
     }
+  },
+  // dev function to clear locally stored data
+  clearLocalData: function() {
+    localStorage.removeItem('playerName');
+    localStorage.removeItem('playerHighScore');
   },
   // function for generating initial board positions
   generateBoard: function() {

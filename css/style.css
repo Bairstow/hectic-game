@@ -95,10 +95,6 @@ body {
   border-radius: 1rem;
   padding-top: 0.4rem;
 }
-#view-high-scores {
-  background-color: #888;
-  color: #CCC;
-}
 
 .game-area {
   position: relative;
@@ -179,6 +175,31 @@ body {
 }
 .input-accept:hover {
   color: green;
+}
+.score-input {
+  position: relative;
+  margin: 0 auto;
+  text-align: center;
+  max-width: 30rem;
+  line-height: 3rem;
+  border: 4px solid #DADDDD;
+  border-radius: 1rem;
+}
+.score-input:hover {
+  background-color: #F4B350;
+}
+
+.high-scores-list {
+
+}
+.high-score-entry {
+  min-width: 40rem;
+  line-height: 3.2rem;
+  padding-left: 1rem;
+  margin-top: 2rem;
+  color: #F4B350;
+  border: 2px solid #DADDDD;
+  border-radius: 1rem;
 }
 
 .footer-row {

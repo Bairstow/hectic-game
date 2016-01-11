@@ -6,6 +6,7 @@ var display = {
   highlightColor: '#DDF',
   gameTiles: null,
   currentPage: 'landing',
+  currentLeaderboard: null,
   groups: {
     $container: null,
     $navBar: null,
@@ -13,6 +14,7 @@ var display = {
     $logo: null,
     $playSelect: null,
     $gameArea: null,
+    $highScores: null,
     $footer: null,
   },
   elts: {
@@ -38,6 +40,7 @@ var display = {
     display.groups.$gameBoardRow = $('.game-board-row');
     display.groups.$gameArea = $('.game-area');
     display.elts.$gameBoard = $('.game-board');
+    display.groups.$highScores = $('.high-scores-row');
     display.groups.$footer = $('.footer-row');
   },
   // function to update display variables
@@ -77,6 +80,9 @@ var display = {
     if (display.currentPage === 'game') {
       display.showGamePage();
     }
+    if (display.currentPage === 'highScores') {
+      display.showHighScoresPage();
+    }
     display.setHandles();
   },
   // function to opening landing page
@@ -85,11 +91,13 @@ var display = {
     display.groups.$logo.css('display', 'block');
     display.groups.$playSelect.css('display', 'block');
     display.groups.$gameBoardRow.css('display', 'none');
+    display.groups.$highScores.css('display', 'none');
   },
   // function to open a game view
   showGamePage: function() {
     display.groups.$logo.css('display', 'none');
     display.groups.$playSelect.css('display', 'none');
+    display.groups.$highScores.css('display', 'none');
     // update board height to reflect width
     display.groups.$gameBoardRow.css('visibility', 'hidden');
     display.groups.$gameBoardRow.css('display', 'block');
@@ -98,6 +106,28 @@ var display = {
     display.groups.$gameBoardRow.css('visibility', 'visible');
     // draw game board elements
     display.drawGameWindow();
+  },
+  // function to open high scores page
+  showHighScoresPage: function() {
+    display.groups.$playSelect.css('display', 'none');
+    display.groups.$gameBoardRow.css('display', 'none');
+    display.groups.$highScores.css('display', 'block');
+    // update and draw current high scores list
+    display.drawHighScoresWindow();
+  },
+  drawHighScoresWindow: function() {
+    $('.high-scores-list').remove();
+    var highScoresList = helpers.elt('div', 'high-scores-list eight columns offset-by-two');
+    display.groups.$highScores.append($(highScoresList));
+    if (display.currentLeaderboard !== null) {
+      var leaders = Object.keys(display.currentLeaderboard);
+      _.each(leaders, function(leader) {
+        var newEntry = helpers.elt('div', 'high-score-entry');
+        newEntry.textContent = display.currentLeaderboard[leader].name + ' - ' +
+          String((display.currentLeaderboard[leader].score * 100).toFixed(0));
+        $(highScoresList).prepend($(newEntry));
+      });
+    }
   },
   drawGameTimer: function() {
     // handle drawing logic for displaying the game timer above the game area
@@ -509,7 +539,11 @@ var display = {
     var highScoreMessage = helpers.elt('div');
     highScoreMessage.textContent = 'Congratulations! You achieved a new high score of ' +
       String((game.data.score * 100).toFixed(0)) + ' internet points.';
+    var scoreInputButton = helpers.elt('div', 'score-input');
+    scoreInputButton.textContent = 'Submit Score';
     alertInfo.appendChild(highScoreMessage);
+    alertInfo.appendChild(scoreInputButton);
+    $('.alert-pane').css('height', String($('.alert-info').height() * 1.2) + 'px');
   },
   checkMouseLocation: function() {
     // grab location data for cursor and gameboard
