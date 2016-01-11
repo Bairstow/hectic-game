@@ -615,6 +615,16 @@ var display = {
       ' ' + String(cHeight - barLevel);
     var gameMultBarLevel = document.getElementsByClassName('game-multiplier-bar-level')[0];
     gameMultBarLevel.setAttribute('d', barLevelPathData);
+    // update broken pieces
+    _.each(game.data.brokenPieces, function(piece) {
+      var multiplier = (1 - piece.currentState) * 0.4 + 1;
+      var width = tileWidth * 0.9 * multiplier;
+      piece.elt.style.width = String(width) + 'px';
+      piece.elt.style.height = String(width) + 'px';
+      piece.elt.style.left = String(piece.markerPos[0] * tileWidth - (width - tileWidth * 0.9)/2) + 'px';
+      piece.elt.style.top = String(piece.markerPos[1] * tileWidth - (width - tileWidth * 0.9)/2) + 'px';
+      piece.elt.style.opacity = String(piece.currentState);
+    });
   },
   setGameEnabled: function() {
     // set visual properties relating to game running

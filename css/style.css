@@ -124,6 +124,10 @@ body {
   position: absolute;
   border-radius: 50%;
 }
+.broken-piece {
+  position: absolute;
+  border-radius: 50%;
+}
 .game-breaks-text {
   font-size: 60%;
 }

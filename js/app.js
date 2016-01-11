@@ -29,7 +29,7 @@ var game = {
     targetedPos: null,
     mousePos: null,
     gamePieces: null,
-    brokenPieces: null,
+    brokenPieces: [],
     breakPieceStatus: false,
     breakRowStatus: false,
     breakBoardStatus: false,
@@ -250,10 +250,21 @@ var game = {
       newMatchPositions = game.collectMatches();
     }
   },
-  setBrokenPieces: function(pieces) {
-    if (game.data.brokenPieces === null) {
-
-    }
+  setBrokenPieces: function(positions) {
+    _.each(positions, function(position) {
+      var posX = position[0];
+      var posY = position[1];
+      var currPiece = game.data.gamePieces[posX][posY];
+      var newElt = helpers.elt('div', 'broken-piece');
+      display.elts.$gameBoard.append($(newElt));
+      var newBrokenPiece = {
+        markerPos: [currPiece.marker[0], currPiece.marker[1]],
+        currentState: 1,
+        elt: newElt
+      };
+      newElt.style.backgroundColor = display.pieceColors[currPiece.category];
+      game.data.brokenPieces.push(newBrokenPiece);
+    });
   },
   clearSelections: function() {
     game.data.currPos = null;
@@ -290,6 +301,26 @@ var game = {
         }
       }
     });
+  },
+  updateBrokenPieces: function(stepSize) {
+    var piecesToRemove = [];
+    _.each(game.data.brokenPieces, function(piece, i) {
+      // update piece status (range from 1-0 reflecting piece opacity) and when full transparency
+      // reached remove the connected element from display and the piece from the array
+      if (piece.currentState <= stepSize) {
+        // iteration will reach full transparency therefore remove this piece and its element
+        $(piece.elt).remove();
+        piecesToRemove.push(i);
+      } else {
+        piece.currentState -= stepSize;
+      }
+    });
+    if (piecesToRemove) {
+      // remove pieces in reverse order so retaining positions of previous indices
+      for (var i = piecesToRemove.length - 1; i >= 0; i--) {
+        game.data.brokenPieces.splice(piecesToRemove[i],1);
+      }
+    }
   },
   breakRandomPiece: function() {
     // mark random board piece to break
@@ -380,6 +411,7 @@ var game = {
     }
     // update piece marker positions (where arg is step distance, 1 = tilewidth)
     game.updateMarkerPositions(0.2);
+    game.updateBrokenPieces(0.05);
   },
   startNewRound: function() {
     // set initial conditions
