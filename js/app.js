@@ -29,9 +29,11 @@ var game = {
     targetedPos: null,
     mousePos: null,
     gamePieces: null,
+    brokenPieces: null,
     breakPieceStatus: false,
     breakRowStatus: false,
     breakBoardStatus: false,
+    breakAudio: new Audio('audio/bubble.wav'),
     startTime: null,
     time: 0,
     multiplier: 0,
@@ -231,6 +233,8 @@ var game = {
   replaceMatches: function(matches) {
     var newMatchPositions = matches;
     while (newMatchPositions.length > 0) {
+      // append removed pieces to list for removal animation (must be called before new positions are assigned)
+      game.setBrokenPieces(newMatchPositions);
       _.each(newMatchPositions, function(matchPosition) {
         game.replacePiece(matchPosition);
         // whenever a piece is removed increment the score
@@ -241,7 +245,14 @@ var game = {
         game.data.multiplier += 0.06 * (newMatchPositions.length - 2);
         if (game.data.multiplier > 1) { game.data.multiplier = 1 };
       }
+      // trigger audio cue that pieces have been removed
+      game.data.breakAudio.play();
       newMatchPositions = game.collectMatches();
+    }
+  },
+  setBrokenPieces: function(pieces) {
+    if (game.data.brokenPieces === null) {
+
     }
   },
   clearSelections: function() {
